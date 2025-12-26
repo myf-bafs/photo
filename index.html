@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手機美顏相機</title>
+    <style>
+        body { margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; background-color: #f0f0f0; }
+        #video { width: 100%; max-width: 640px; border: 2px solid #ccc; border-radius: 10px; }
+        #canvas { display: none; }
+        #suggestion { margin-top: 10px; font-size: 18px; color: green; }
+        #captureBtn { margin-top: 10px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        #photo { margin-top: 10px; width: 100%; max-width: 640px; display: none; border: 2px solid #ccc; border-radius: 10px; }
+        /* 美顏濾鏡：簡單的CSS濾鏡，增加亮度和平滑 */
+        .beauty-filter { filter: brightness(1.1) contrast(1.1) saturate(1.2); }
+    </style>
+    <!-- MediaPipe CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/vision_bundle.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <video id="video" autoplay playsinline class="beauty-filter"></video>
+    <canvas id="canvas"></canvas>
+    <div id="suggestion"></div>
+    <button id="captureBtn">拍照</button>
+    <img id="photo" alt="Captured Photo">
+    
+    <script type="module">
+        import { FilesetResolver, FaceDetector } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/vision_bundle.js";
+
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const suggestion = document.getElementById('suggestion');
+        const captureBtn = document.getElementById('captureBtn');
+        const photo = document.getElementById('photo');
+
+        let faceDetector;
+        let lastVideoTime = -1;
+
+        // 設置相機
+        async function setupCamera() {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } }); // 使用前置相機
+            video.srcObject = stream;
+            video.onloadedmetadata = () => {
+                video.play();
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                renderLoop();
+            };
+        }
+
+        // 初始化MediaPipe Face Detector
+        async function initFaceDetector() {
+            const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm");
+            faceDetector = await FaceDetector.createFromOptions(vision, {
+                baseOptions: {
+                    modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite",
+                    delegate: "GPU" // 使用GPU加速如果可用
+                },
+                runningMode: "VIDEO"
+            });
+        }
+
+        // 渲染循環：檢測面部並檢查對位
+        function renderLoop() {
+            if (video.currentTime !== lastVideoTime && faceDetector) {
+                const detections = faceDetector.detectForVideo(video, performance.now());
+                processDetections(detections);
+                lastVideoTime = video.currentTime;
+            }
+            requestAnimationFrame(renderLoop);
+        }
+
+        // 處理檢測結果：檢查面部對位並建議拍照
+        function processDetections(detections) {
+            suggestion.textContent = '';
+            if (detections.detections.length === 1) { // 只檢測到一張臉
+                const detection = detections.detections[0];
+                const bbox = detection.boundingBox;
+                const centerX = bbox.originX + bbox.width / 2;
+                const centerY = bbox.originY + bbox.height / 2;
+                const videoWidth = video.videoWidth;
+                const videoHeight = video.videoHeight;
+
+                // 檢查是否居中（對位）：面部中心應在畫面中心±20%範圍內
+                const isAlignedX = Math.abs(centerX - videoWidth / 2) < videoWidth * 0.2;
+                const isAlignedY = Math.abs(centerY - videoHeight / 2) < videoHeight * 0.2;
+                const isProperSize = bbox.width > videoWidth * 0.3 && bbox.width < videoWidth * 0.7; // 面部大小適中
+
+                if (isAlignedX && isAlignedY && isProperSize) {
+                    suggestion.textContent = '對位完成！可以拍照了。';
+                    // 可以添加自動拍照邏輯，例如倒計時後自動捕獲
+                    // setTimeout(capturePhoto, 3000); // 示例：3秒後自動拍照
+                } else {
+                    if (!isAlignedX) suggestion.textContent += '請將臉部移到畫面中央（左右）。 ';
+                    if (!isAlignedY) suggestion.textContent += '請將臉部移到畫面中央（上下）。 ';
+                    if (!isProperSize) suggestion.textContent += '請調整距離。';
+                }
+            } else if (detections.detections.length > 1) {
+                suggestion.textContent = '檢測到多張臉，請只留一張臉。';
+            } else {
+                suggestion.textContent = '未檢測到臉部，請面對相機。';
+            }
+        }
+
+        // 捕獲照片：應用美顏濾鏡後保存
+        function capturePhoto() {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // 簡單美顏處理：使用canvas應用額外濾鏡（例如輕微模糊）
+            ctx.filter = 'brightness(1.1) contrast(1.1) saturate(1.2) blur(1px)'; // 額外美顏
+            ctx.drawImage(canvas, 0, 0); // 重新繪製以應用濾鏡
+            photo.src = canvas.toDataURL('image/jpeg');
+            photo.style.display = 'block';
+        }
+
+        // 按鈕事件
+        captureBtn.addEventListener('click', capturePhoto);
+
+        // 初始化
+        await initFaceDetector();
+        setupCamera();
+    </script>
+</body>
+</html>
