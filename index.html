@@ -81,12 +81,13 @@
         <section class="bg-white rounded-3xl shadow-lg p-5 mb-6 border border-slate-100">
             <div class="flex flex-col gap-4 mb-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">選擇難度</label>
+                    <label class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">選擇難度 / 課題</label>
                     <select id="topicSelect" class="w-full p-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 transition-all appearance-none cursor-pointer text-sm">
                         <option value="10以內的簡單加法">🟢 10以內簡單加法 (最易)</option>
                         <option value="20以內的加法應用題">🟡 20以內應用題 (初階)</option>
                         <option value="兩位數不進位加法">🟠 兩位數加法 (中階)</option>
                         <option value="簡單連加法 (三個數)">🔵 三個數連加 (進階)</option>
+                        <option value="因式分解 (初階提取公因式或平方差)">💜 因式分解 (初階)</option>
                     </select>
                 </div>
                 <button id="genBtn" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-4 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2">
@@ -130,7 +131,7 @@
     </div>
 
     <script>
-        // 設定 API Key (這裡請填寫您的智譜 AI Key)
+        // 設定 API Key
         const apiKey = "272f193352024ce99416a7128bc499f6.QADLgmGclBxYOWYr"; 
         const glmEndpoint = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
 
@@ -201,18 +202,16 @@
             canvas.addEventListener('touchend', stopDrawing, { passive: false });
         }
 
-        // 修改後的 GLM 呼叫函數
         async function callGLM(prompt, base64Img = null) {
             let messages = [
                 { 
                     role: "system", 
-                    content: "你是一位親切的香港數學老師。請用繁體中文回覆。題目要極度簡單、文字少、數字小。不要使用 Markdown 符號如 ####。數學公式請用 LaTeX $ 包裹。排版要清晰美觀。" 
+                    content: "你是一位親切的香港數學老師。請用繁體中文回覆。題目要極度簡單、文字少、數字小。不要使用 Markdown 符號如 ####。數學公式請用 LaTeX $ 包裹。排版要清晰美觀。如果是因式分解題目，請確保題目適合初學者。" 
                 }
             ];
 
             let userContent = [];
             if (base64Img) {
-                // GLM-4V 多模態格式
                 userContent.push({
                     type: "image_url",
                     image_url: { url: base64Img }
@@ -246,7 +245,7 @@
             genLoader.classList.remove('hidden');
             questionContainer.innerHTML = `<div class="loader !border-slate-200 border-t-slate-800"></div>`;
             
-            const prompt = `請出一題關於「${topicSelect.value}」的題目。要求：數字小，文字少於15字。`;
+            const prompt = `請出一題關於「${topicSelect.value}」的題目。要求：如果是代數或因式分解，請用 LaTeX $ 顯示公式。題目要簡潔，文字少於 20 字。`;
 
             try {
                 const content = await callGLM(prompt);
@@ -272,14 +271,14 @@
 
             const prompt = `這是學生對題目「${currentQuestion}」的手寫解答圖片。請批改此算式。
             1. 先判斷對錯。
-            2. 使用 LaTeX 的 align* 環境給出極簡解答。
+            2. 使用 LaTeX 的 align* 環境給出完整正確的解答步驟。
             3. 確保不要輸出 #### 等標記符號。`;
 
             try {
                 const res = await callGLM(prompt, imageData);
                 const cleanOutput = res
                     .split('\n').map(line => {
-                        if (line.includes('對') || line.includes('錯') || line.includes('解答') || line.includes('建議') || line.includes('正確')) {
+                        if (line.includes('對') || line.includes('錯') || line.includes('解答') || line.includes('建議') || line.includes('正確') || line.includes('批改')) {
                             return `<h4><span class="teacher-tag">老師</span> ${line.trim()}</h4>`;
                         }
                         return line;
