@@ -1,125 +1,263 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>手機美顏相機</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI 數學導師 (簡易版)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- KaTeX -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
     <style>
-        body { margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; background-color: #f0f0f0; }
-        #video { width: 100%; max-width: 640px; border: 2px solid #ccc; border-radius: 10px; }
-        #canvas { display: none; }
-        #suggestion { margin-top: 10px; font-size: 18px; color: green; }
-        #captureBtn { margin-top: 10px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        #photo { margin-top: 10px; width: 100%; max-width: 640px; display: none; border: 2px solid #ccc; border-radius: 10px; }
-        /* 美顏濾鏡：簡單的CSS濾鏡，增加亮度和平滑 */
-        .beauty-filter { filter: brightness(1.1) contrast(1.1) saturate(1.2); }
-    </style>
-    <!-- MediaPipe CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/vision_bundle.js" crossorigin="anonymous"></script>
-</head>
-<body>
-    <video id="video" autoplay playsinline class="beauty-filter"></video>
-    <canvas id="canvas"></canvas>
-    <div id="suggestion"></div>
-    <button id="captureBtn">拍照</button>
-    <img id="photo" alt="Captured Photo">
-    
-    <script type="module">
-        import { FilesetResolver, FaceDetector } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/vision_bundle.js";
-
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const suggestion = document.getElementById('suggestion');
-        const captureBtn = document.getElementById('captureBtn');
-        const photo = document.getElementById('photo');
-
-        let faceDetector;
-        let lastVideoTime = -1;
-
-        // 設置相機
-        async function setupCamera() {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } }); // 使用前置相機
-            video.srcObject = stream;
-            video.onloadedmetadata = () => {
-                video.play();
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                renderLoop();
-            };
+        body { font-feature-settings: "cv05", "cv08", "ss01"; }
+        .katex { font-size: 1.1em !important; }
+        .katex-display { 
+            padding: 1.5rem;
+            margin: 1.2rem 0;
+            background: linear-gradient(145deg, #f0f9ff, #e0f2fe);
+            border-left: 5px solid #0ea5e9;
+            border-radius: 12px;
+            overflow-x: auto;
         }
+        .question-box {
+            background: linear-gradient(to bottom right, #ffffff, #f8fafc);
+            border: 1px solid #e2e8f0;
+        }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #drawingCanvas { touch-action: none; cursor: crosshair; }
+        .analysis-content h4 { 
+            font-weight: 800; 
+            color: #1e293b; 
+            margin-top: 1.5rem; 
+            margin-bottom: 0.75rem; 
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            padding-left: 0.75rem;
+            border-left: 4px solid #0f172a;
+        }
+        .analysis-content p { margin-bottom: 1rem; line-height: 1.6; }
+        .teacher-tag {
+            display: inline-block;
+            padding: 2px 10px;
+            background: #0f172a;
+            color: #ffffff;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans text-slate-900">
 
-        // 初始化MediaPipe Face Detector
-        async function initFaceDetector() {
-            const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm");
-            faceDetector = await FaceDetector.createFromOptions(vision, {
-                baseOptions: {
-                    modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite",
-                    delegate: "GPU" // 使用GPU加速如果可用
-                },
-                runningMode: "VIDEO"
+    <div class="max-w-4xl mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-black text-slate-800 tracking-tight mb-2">🎓 AI 數學導師</h1>
+            <p class="text-slate-500 font-medium">簡單題目 · 清楚批改</p>
+        </header>
+
+        <!-- Step 1: Question Generation -->
+        <section class="bg-white rounded-3xl shadow-xl p-6 mb-8 border border-slate-100">
+            <div class="flex flex-col md:flex-row items-end justify-between gap-4 mb-6">
+                <div class="flex-1">
+                    <label class="block text-sm font-bold text-slate-500 mb-2">選擇難度</label>
+                    <select id="topicSelect" class="w-full p-3.5 border border-slate-200 rounded-2xl bg-slate-50 text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 transition-all appearance-none cursor-pointer">
+                        <option value="10以內的簡單加法">🟢 10以內簡單加法 (最易)</option>
+                        <option value="20以內的加法應用題">🟡 20以內應用題 (初階)</option>
+                        <option value="兩位數不進位加法">🟠 兩位數加法 (中階)</option>
+                        <option value="簡單連加法 (三個數)">🔵 三個數連加 (進階)</option>
+                    </select>
+                </div>
+                <button id="genBtn" class="w-full md:w-auto bg-slate-900 hover:bg-slate-800 text-white px-10 py-4 rounded-2xl font-bold transition-all shadow-lg flex items-center justify-center gap-2">
+                    <span id="genBtnText">出題</span>
+                    <div id="genLoader" class="loader hidden border-white border-t-transparent"></div>
+                </button>
+            </div>
+            
+            <div id="questionContainer" class="question-box rounded-2xl p-8 min-h-[100px] flex flex-col items-center justify-center text-center text-slate-400 border border-slate-50">
+                <p class="italic text-lg">點擊「出題」開始練習</p>
+            </div>
+        </section>
+
+        <!-- Step 2: Drawing Board -->
+        <section id="analysisSection" class="bg-white rounded-3xl shadow-xl p-6 mb-8 border border-slate-100 opacity-50 pointer-events-none transition-all duration-500">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-slate-800">請寫下計算過程：</h2>
+                <button id="clearCanvas" class="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors">清除</button>
+            </div>
+
+            <div id="canvasWrapper" class="relative bg-white border-2 border-slate-100 rounded-3xl overflow-hidden mb-6 shadow-inner">
+                <canvas id="drawingCanvas" width="1000" height="400" class="w-full h-auto bg-white"></canvas>
+            </div>
+
+            <button id="analyzeBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-black shadow-xl shadow-blue-100 transition-all flex items-center justify-center gap-3">
+                <span id="analyzeBtnText" class="text-lg">提交批改</span>
+                <div id="analyzeLoader" class="loader hidden border-white border-t-transparent"></div>
+            </button>
+        </section>
+
+        <!-- Results -->
+        <div id="resultArea" class="hidden bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden mb-20">
+            <div class="bg-slate-900 px-8 py-5 flex justify-between items-center text-white">
+                <h3 class="font-bold text-lg">批改結果</h3>
+                <button id="closeResult" class="opacity-50 hover:opacity-100">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="analysisOutput" class="p-8 text-slate-700 analysis-content leading-relaxed"></div>
+        </div>
+    </div>
+
+    <script>
+        const apiKey = ""; // 自動注入
+        const modelUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=";
+
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        const genBtn = document.getElementById('genBtn');
+        const topicSelect = document.getElementById('topicSelect');
+        const genLoader = document.getElementById('genLoader');
+        const questionContainer = document.getElementById('questionContainer');
+        const analysisSection = document.getElementById('analysisSection');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const analyzeLoader = document.getElementById('analyzeLoader');
+        const resultArea = document.getElementById('resultArea');
+        const analysisOutput = document.getElementById('analysisOutput');
+        
+        let currentQuestion = "";
+        let drawing = false;
+
+        function performRender(el) {
+            renderMathInElement(el, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ],
+                throwOnError: false
             });
         }
 
-        // 渲染循環：檢測面部並檢查對位
-        function renderLoop() {
-            if (video.currentTime !== lastVideoTime && faceDetector) {
-                const detections = faceDetector.detectForVideo(video, performance.now());
-                processDetections(detections);
-                lastVideoTime = video.currentTime;
+        function initCanvas() {
+            ctx.lineWidth = 5;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#0f172a';
+            const getPos = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
+                const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+                return {
+                    x: (clientX - rect.left) * (canvas.width / rect.width),
+                    y: (clientY - rect.top) * (canvas.height / rect.height)
+                };
+            };
+            const start = (e) => { drawing = true; draw(e); };
+            const stop = () => { drawing = false; ctx.beginPath(); };
+            const draw = (e) => {
+                if (!drawing) return;
+                const { x, y } = getPos(e);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+            };
+            canvas.addEventListener('mousedown', start);
+            canvas.addEventListener('mousemove', draw);
+            window.addEventListener('mouseup', stop);
+            canvas.addEventListener('touchstart', (e) => { e.preventDefault(); start(e); }, {passive: false});
+            canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, {passive: false});
+            canvas.addEventListener('touchend', stop);
+        }
+
+        async function callAI(prompt, base64Img = null) {
+            const parts = [{ text: prompt }];
+            if (base64Img) {
+                parts.push({ inlineData: { mimeType: "image/png", data: base64Img.split(',')[1] } });
             }
-            requestAnimationFrame(renderLoop);
+            const response = await fetch(`${modelUrl}${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts }],
+                    systemInstruction: { parts: [{ text: "你是一位親切的數學老師。請用繁體中文回覆。題目要極度簡單、文字少、數字小。不要使用Markdown符號如####。排版要整齊。" }] }
+                })
+            });
+            const data = await response.json();
+            return data.candidates[0].content.parts[0].text;
         }
 
-        // 處理檢測結果：檢查面部對位並建議拍照
-        function processDetections(detections) {
-            suggestion.textContent = '';
-            if (detections.detections.length === 1) { // 只檢測到一張臉
-                const detection = detections.detections[0];
-                const bbox = detection.boundingBox;
-                const centerX = bbox.originX + bbox.width / 2;
-                const centerY = bbox.originY + bbox.height / 2;
-                const videoWidth = video.videoWidth;
-                const videoHeight = video.videoHeight;
+        genBtn.addEventListener('click', async () => {
+            genBtn.disabled = true;
+            genLoader.classList.remove('hidden');
+            questionContainer.innerHTML = `<div class="loader !border-slate-200 border-t-slate-800"></div>`;
+            
+            const prompt = `請出一題關於「${topicSelect.value}」的題目。要求：數字要小，文字描述不超過20字。`;
 
-                // 檢查是否居中（對位）：面部中心應在畫面中心±20%範圍內
-                const isAlignedX = Math.abs(centerX - videoWidth / 2) < videoWidth * 0.2;
-                const isAlignedY = Math.abs(centerY - videoHeight / 2) < videoHeight * 0.2;
-                const isProperSize = bbox.width > videoWidth * 0.3 && bbox.width < videoWidth * 0.7; // 面部大小適中
-
-                if (isAlignedX && isAlignedY && isProperSize) {
-                    suggestion.textContent = '對位完成！可以拍照了。';
-                    // 可以添加自動拍照邏輯，例如倒計時後自動捕獲
-                    // setTimeout(capturePhoto, 3000); // 示例：3秒後自動拍照
-                } else {
-                    if (!isAlignedX) suggestion.textContent += '請將臉部移到畫面中央（左右）。 ';
-                    if (!isAlignedY) suggestion.textContent += '請將臉部移到畫面中央（上下）。 ';
-                    if (!isProperSize) suggestion.textContent += '請調整距離。';
-                }
-            } else if (detections.detections.length > 1) {
-                suggestion.textContent = '檢測到多張臉，請只留一張臉。';
-            } else {
-                suggestion.textContent = '未檢測到臉部，請面對相機。';
+            try {
+                const content = await callAI(prompt);
+                currentQuestion = content;
+                questionContainer.innerHTML = `<div class="text-2xl font-bold text-slate-800">${content}</div>`;
+                analysisSection.classList.remove('opacity-50', 'pointer-events-none');
+                performRender(questionContainer);
+            } catch (e) {
+                questionContainer.innerText = "請稍後再試";
+            } finally {
+                genBtn.disabled = false;
+                genLoader.classList.add('hidden');
             }
-        }
+        });
 
-        // 捕獲照片：應用美顏濾鏡後保存
-        function capturePhoto() {
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            // 簡單美顏處理：使用canvas應用額外濾鏡（例如輕微模糊）
-            ctx.filter = 'brightness(1.1) contrast(1.1) saturate(1.2) blur(1px)'; // 額外美顏
-            ctx.drawImage(canvas, 0, 0); // 重新繪製以應用濾鏡
-            photo.src = canvas.toDataURL('image/jpeg');
-            photo.style.display = 'block';
-        }
+        analyzeBtn.addEventListener('click', async () => {
+            const imageData = canvas.toDataURL('image/png');
+            analyzeBtn.disabled = true;
+            analyzeLoader.classList.remove('hidden');
+            resultArea.classList.remove('hidden');
+            analysisOutput.innerHTML = `<p class="text-center py-10 font-bold text-slate-400">正在批改中...</p>`;
+            resultArea.scrollIntoView({ behavior: 'smooth' });
 
-        // 按鈕事件
-        captureBtn.addEventListener('click', capturePhoto);
+            const prompt = `批改這張圖片裡的解答。題目是：${currentQuestion}。
+            請先說對或錯，再用 LaTeX 的 align* 環境給出極簡的正確解答。
+            不要顯示 #### 或任何代碼塊標記。`;
 
-        // 初始化
-        await initFaceDetector();
-        setupCamera();
+            try {
+                const res = await callAI(prompt, imageData);
+                const cleanOutput = res
+                    .split('\n').map(line => {
+                        if (line.includes('對') || line.includes('錯') || line.includes('解答') || line.includes('建議')) {
+                            return `<h4><span class="teacher-tag">老師說</span> ${line.trim()}</h4>`;
+                        }
+                        return line;
+                    }).join('\n')
+                    .replace(/\n/g, '<br>');
+                
+                analysisOutput.innerHTML = cleanOutput;
+                setTimeout(() => performRender(analysisOutput), 50);
+            } catch (e) {
+                analysisOutput.innerText = "批改失敗";
+            } finally {
+                analyzeBtn.disabled = false;
+                analyzeLoader.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('clearCanvas').addEventListener('click', () => ctx.clearRect(0, 0, canvas.width, canvas.height));
+        document.getElementById('closeResult').addEventListener('click', () => {
+            resultArea.classList.add('hidden');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+
+        window.onload = () => { initCanvas(); performRender(document.body); };
     </script>
 </body>
-
 </html>
