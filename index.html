@@ -2,306 +2,212 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 數學導師 (GLM-4.6V 版)</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- KaTeX -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>會計溫習助手 Pro V12 (DSE 2025)</title>
     <style>
-        body { 
-            font-feature-settings: "cv05", "cv08", "ss01";
-            overscroll-behavior-y: contain;
+        :root {
+            --primary: #2c3e50; --ratio: #27ae60; --limit: #16a085; --principle: #8e44ad; --error: #e67e22; --entry: #c0392b; --note: #2980b9; --wrong: #7f8c8d; --bg: #f4f7f6;
         }
-        .katex { font-size: 1.1em !important; }
-        .katex-display { 
-            padding: 1.5rem;
-            margin: 1.2rem 0;
-            background: linear-gradient(145deg, #f0f9ff, #e0f2fe);
-            border-left: 5px solid #0ea5e9;
-            border-radius: 12px;
-            overflow-x: auto;
-        }
-        .question-box {
-            background: linear-gradient(to bottom right, #ffffff, #f8fafc);
-            border: 1px solid #e2e8f0;
-        }
-        .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3498db;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        #drawingCanvas { 
-            touch-action: none; 
-            cursor: crosshair;
-            background-color: #ffffff;
-        }
-
-        .analysis-content h4 { 
-            font-weight: 800; 
-            color: #1e293b; 
-            margin-top: 1.5rem; 
-            margin-bottom: 0.75rem; 
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            padding-left: 0.75rem;
-            border-left: 4px solid #0f172a;
-        }
-        .analysis-content p { margin-bottom: 1rem; line-height: 1.6; }
-        .teacher-tag {
-            display: inline-block;
-            padding: 2px 10px;
-            background: #0f172a;
-            color: #ffffff;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            font-weight: bold;
-            margin-right: 10px;
-        }
+        body { font-family: 'PingFang HK', 'Microsoft JhengHei', sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .container { max-width: 600px; width: 100%; }
+        .main-menu { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 10px; }
+        .menu-btn { padding: 20px; border: none; border-radius: 12px; color: white; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.3s; text-align: left; display: flex; align-items: center; justify-content: space-between; }
+        .sub-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .back-btn { background: #34495e; grid-column: 1 / -1; margin-top: 10px; justify-content: center; }
+        .content-box { margin-top: 20px; width: 100%; }
+        .card-container { perspective: 1000px; width: 100%; height: 350px; cursor: pointer; }
+        .card { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .card.flipped { transform: rotateY(180deg); }
+        .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 25px; box-sizing: border-box; border-radius: 20px; background: white; }
+        .card-back { transform: rotateY(180deg); color: white; font-weight: bold; }
+        .quiz-container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .option { display: block; width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #eee; border-radius: 12px; text-align: left; background: white; font-size: 1rem; cursor: pointer; }
+        .hidden { display: none !important; }
+        h1 { color: var(--primary); font-size: 1.5rem; margin-bottom: 5px; text-align: center; }
+        .tag { font-size: 0.8rem; background: rgba(0,0,0,0.05); padding: 5px 12px; border-radius: 20px; margin-bottom: 10px; color: #666; }
+        table.log-table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; font-size: 0.85rem; }
+        table.log-table th, table.log-table td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen font-sans text-slate-900">
-
-    <div class="max-w-4xl mx-auto p-4 md:p-8">
-        <header class="text-center mb-6">
-            <h1 class="text-3xl font-black text-slate-800 tracking-tight mb-1">🎓 AI 數學導師</h1>
-            <p class="text-slate-500 font-medium">使用 GLM-4.6V-Flash 多模態引擎</p>
+<body>
+    <div class="container">
+        <header>
+            <h1>會計溫習助手 Pro V12</h1>
+            <p style="text-align:center; font-size:0.8rem; color:var(--limit);">新增：會計比率的限制</p>
         </header>
 
-        <!-- Step 1: Question Generation -->
-        <section class="bg-white rounded-3xl shadow-lg p-5 mb-6 border border-slate-100">
-            <div class="flex flex-col gap-4 mb-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">選擇難度 / 課題</label>
-                    <select id="topicSelect" class="w-full p-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 transition-all appearance-none cursor-pointer text-sm">
-                        <option value="10以內的簡單加法">🟢 10以內簡單加法 (最易)</option>
-                        <option value="20以內的加法應用題">🟡 20以內應用題 (初階)</option>
-                        <option value="兩位數不進位加法">🟠 兩位數加法 (中階)</option>
-                        <option value="簡單連加法 (三個數)">🔵 三個數連加 (進階)</option>
-                        <option value="因式分解 (初階提取公因式或平方差)">💜 因式分解 (初階)</option>
-                    </select>
+        <div id="main-nav" class="main-menu">
+            <button class="menu-btn" style="background: var(--limit);" onclick="enterTopic('ratioLimit')">💡 會計比率的限制 (新課題)</button>
+            <button class="menu-btn" style="background: var(--ratio);" onclick="enterTopic('ratio')">📊 會計比率公式</button>
+            <button class="menu-btn" style="background: var(--entry);" onclick="enterTopic('entry')">📓 重要會計分錄</button>
+            <button class="menu-btn" style="background: var(--error);" onclick="enterTopic('error')">⚠️ 錯誤更正定義</button>
+            <button class="menu-btn" style="background: var(--principle);" onclick="enterTopic('principle')">📜 會計原則</button>
+            <button class="menu-btn" style="background: var(--note);" onclick="enterTopic('note')">✉️ 通知單處理</button>
+            <button class="menu-btn" style="background: var(--wrong);" onclick="showSection('wrong')">📝 錯題簿</button>
+        </div>
+
+        <div id="sub-nav" class="sub-menu hidden">
+            <h2 id="current-topic-name" style="grid-column: 1/-1; text-align: center;"></h2>
+            <button id="btn-flash" class="menu-btn" style="justify-content:center;" onclick="startMode('flash')">閃卡溫習</button>
+            <button id="btn-mc" class="menu-btn" style="justify-content:center;" onclick="startMode('mc')">MC 測試</button>
+            <button class="menu-btn back-btn" onclick="goHome()">⬅ 返回主目錄</button>
+        </div>
+
+        <div id="content-area" class="content-box hidden">
+            <div id="flash-mode" class="hidden">
+                <div class="card-container" onclick="this.querySelector('.card').classList.toggle('flipped')">
+                    <div class="card" id="main-card">
+                        <div class="card-front"><span class="tag">題目</span><div id="q-text" style="font-weight:bold; line-height:1.4; padding:0 10px;"></div></div>
+                        <div class="card-back" id="card-back-bg"><span class="tag" style="background:rgba(255,255,255,0.2); color:white;">詳細內容</span><div id="a-text" style="padding:0 15px; font-size: 0.95rem; line-height: 1.6;"></div></div>
+                    </div>
                 </div>
-                <button id="genBtn" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-4 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2">
-                    <span id="genBtnText">出題</span>
-                    <div id="genLoader" class="loader hidden border-white border-t-transparent"></div>
-                </button>
-            </div>
-            
-            <div id="questionContainer" class="question-box rounded-xl p-6 min-h-[80px] flex flex-col items-center justify-center text-center text-slate-400 border border-slate-50">
-                <p class="italic">請點擊「出題」</p>
-            </div>
-        </section>
-
-        <!-- Step 2: Drawing Board -->
-        <section id="analysisSection" class="bg-white rounded-3xl shadow-lg p-5 mb-6 border border-slate-100 opacity-50 pointer-events-none transition-all duration-500">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-sm font-bold text-slate-800 uppercase tracking-widest">手寫計算區</h2>
-                <button id="clearCanvas" class="text-xs font-bold text-red-500 hover:text-red-700 uppercase transition-colors">清除畫板</button>
+                <div style="display:flex; justify-content: space-between; margin-top: 20px;">
+                    <button class="menu-btn" style="background:#bdc3c7; width:45%; padding:15px; justify-content:center;" onclick="changeCard(-1)">上一個</button>
+                    <button class="menu-btn" style="background:var(--primary); width:45%; padding:15px; justify-content:center;" onclick="changeCard(1)">下一個</button>
+                </div>
             </div>
 
-            <div id="canvasWrapper" class="relative bg-white border-2 border-slate-200 rounded-2xl overflow-hidden mb-6">
-                <canvas id="drawingCanvas" width="800" height="450" class="w-full h-auto bg-white touch-none"></canvas>
+            <div id="mc-mode" class="hidden">
+                <div class="quiz-container">
+                    <div id="mc-q" style="font-weight:bold; margin-bottom:15px;"></div>
+                    <div id="mc-options"></div>
+                    <div id="mc-fb" style="display:none; padding:15px; border-radius:10px; margin-top:15px; font-weight:bold;"></div>
+                    <button id="mc-next" class="menu-btn hidden" style="background:var(--primary); width:100%; margin-top:15px; justify-content:center;" onclick="generateMC()">下一題</button>
+                </div>
             </div>
 
-            <button id="analyzeBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-black shadow-lg shadow-blue-100 transition-all flex items-center justify-center gap-3 active:scale-95">
-                <span id="analyzeBtnText" class="text-base">提交批改</span>
-                <div id="analyzeLoader" class="loader hidden border-white border-t-transparent"></div>
-            </button>
-        </section>
-
-        <!-- Results -->
-        <div id="resultArea" class="hidden bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden mb-20">
-            <div class="bg-slate-900 px-6 py-4 flex justify-between items-center text-white">
-                <h3 class="font-bold text-base">老師批改報告</h3>
-                <button id="closeResult" class="opacity-50">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
+            <div id="wrong-mode" class="hidden">
+                <table class="log-table">
+                    <thead><tr><th>類別</th><th>題目</th><th>正確答案</th></tr></thead>
+                    <tbody id="wrong-list"></tbody>
+                </table>
+                <button class="menu-btn" style="background:var(--entry); width:100%; margin-top:20px; justify-content:center;" onclick="clearWrongs()">清空記錄</button>
             </div>
-            <div id="analysisOutput" class="p-6 text-slate-700 analysis-content leading-relaxed text-sm md:text-base"></div>
+            <button class="menu-btn back-btn" onclick="exitToSubNav()">⬅ 返回模式選擇</button>
         </div>
     </div>
 
     <script>
-        // 設定 API Key
-        const apiKey = "272f193352024ce99416a7128bc499f6.QADLgmGclBxYOWYr"; 
-        const glmEndpoint = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
+        const appData = {
+            ratioLimit: { title: "比率的限制", color: "#16a085", items: [
+                { q: "限制1：資訊的時間性", a: "會計信息來自過去的成果而非當前的資訊，對預測企業未來的發展無關。" },
+                { q: "限制2：通貨膨脹與歷史成本", a: "會計比率是基於沒有理會通貨膨脹的歷史成本計算而來的，對評估現時的業績表現可能會產生誤導。" },
+                { q: "限制3：忽略質性訊息", a: "會計比率忽略了公司管治、客戶忠誠度和員工士氣等質性訊息，這些對評估企業成敗至關重要。" },
+                { q: "為什麼歷史成本會產生誤導？", a: "因為它沒有考慮通貨膨脹對資產價值和購買力的影響。" },
+                { q: "哪一項訊息無法從會計比率中反映？", a: "質性訊息，例如員工士氣或客戶對品牌的忠誠度。" }
+            ]},
+            ratio: { title: "會計比率", color: "#27ae60", items: [
+                { q: "加成 (Mark-up)", a: "(毛利 / 銷貨成本) x 100%" },
+                { q: "毛利率 (Margin)", a: "(毛利 / 銷貨) x 100%" },
+                { q: "運用資金報酬率 (ROCE)", a: "(利息及稅前淨利 / 平均運用資金) x 100%" },
+                { q: "存貨周轉率 (次)", a: "銷貨成本 / 平均存貨" },
+                { q: "槓桿比率 (Gearing)", a: "(非流動負債 + 優先股本) / (非流動負債 + 股東資本) x 100%" },
+                { q: "市盈率 (P/E Ratio)", a: "每股普通股市價 / 每股盈利" }
+            ]},
+            entry: { title: "重要分錄", color: "#c0392b", items: [
+                { q: "註銷壞帳 (備抵法)", a: "借：呆帳準備 | 貸：應收貨款" },
+                { q: "發出免費貨物樣本", a: "借：推廣費用 | 貸：購貨" },
+                { q: "存貨損失 (Stock Loss)", a: "借：存貨損失 | 貸：購貨" }
+            ]},
+            error: { title: "錯誤定義", color: "#e67e22", items: [
+                { q: "原則性錯誤 (Principle)", a: "入錯不同類別帳戶 (如資產入作費用)" },
+                { q: "帳名調亂 (Commission)", a: "入錯同類別帳戶" },
+                { q: "抵銷性錯誤 (Compensating)", a: "兩個獨立錯誤金額剛好互相抵銷" }
+            ]},
+            principle: { title: "會計原則", color: "#8e44ad", items: [
+                { q: "應計觀念", a: "收入與費用應在發生時記錄，而非收付現金時記錄。" },
+                { q: "穩健保守原則", a: "不預計收益，但預計所有潛在損失。" }
+            ]},
+            note: { title: "通知單處理", color: "#2980b9", items: [
+                { q: "發出借項通知單", a: "購貨退出" }, { q: "發出貸項通知單", a: "銷貨退回" }
+            ]}
+        };
 
-        const canvas = document.getElementById('drawingCanvas');
-        const ctx = canvas.getContext('2d');
-        const genBtn = document.getElementById('genBtn');
-        const topicSelect = document.getElementById('topicSelect');
-        const genLoader = document.getElementById('genLoader');
-        const questionContainer = document.getElementById('questionContainer');
-        const analysisSection = document.getElementById('analysisSection');
-        const analyzeBtn = document.getElementById('analyzeBtn');
-        const analyzeLoader = document.getElementById('analyzeLoader');
-        const resultArea = document.getElementById('resultArea');
-        const analysisOutput = document.getElementById('analysisOutput');
-        
-        let currentQuestion = "";
-        let drawing = false;
+        let currentTopic = ''; let currentIdx = 0; let wrongList = JSON.parse(localStorage.getItem('acc_v12_data')) || [];
 
-        function performRender(el) {
-            renderMathInElement(el, {
-                delimiters: [
-                    {left: '$$', right: '$$', display: true},
-                    {left: '$', right: '$', display: false}
-                ],
-                throwOnError: false
-            });
+        function enterTopic(topicId) {
+            currentTopic = topicId;
+            document.getElementById('main-nav').classList.add('hidden');
+            document.getElementById('sub-nav').classList.remove('hidden');
+            document.getElementById('current-topic-name').innerText = appData[topicId].title;
+            const color = appData[topicId].color;
+            document.getElementById('btn-flash').style.background = color;
+            document.getElementById('btn-mc').style.background = color;
         }
 
-        function initCanvas() {
-            ctx.lineWidth = 6; 
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.strokeStyle = '#1e293b';
+        function goHome() { document.getElementById('sub-nav').classList.add('hidden'); document.getElementById('main-nav').classList.remove('hidden'); }
+        function exitToSubNav() {
+            document.getElementById('content-area').classList.add('hidden');
+            if (currentTopic === 'wrong') goHome(); else document.getElementById('sub-nav').classList.remove('hidden');
+        }
 
-            function getCoords(e) {
-                const rect = canvas.getBoundingClientRect();
-                let clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                let clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                return {
-                    x: (clientX - rect.left) * (canvas.width / rect.width),
-                    y: (clientY - rect.top) * (canvas.height / rect.height)
+        function startMode(mode) {
+            document.getElementById('sub-nav').classList.add('hidden');
+            document.getElementById('content-area').classList.remove('hidden');
+            document.getElementById('flash-mode').classList.toggle('hidden', mode !== 'flash');
+            document.getElementById('mc-mode').classList.toggle('hidden', mode !== 'mc');
+            if (mode === 'flash') { currentIdx = 0; updateFlash(); } else generateMC();
+        }
+
+        function updateFlash() {
+            const item = appData[currentTopic].items[currentIdx];
+            document.getElementById('q-text').innerText = item.q;
+            document.getElementById('a-text').innerText = item.a.replace(/\|/g, '\n');
+            document.getElementById('card-back-bg').style.background = appData[currentTopic].color;
+            document.getElementById('main-card').classList.remove('flipped');
+        }
+
+        function changeCard(dir) {
+            const len = appData[currentTopic].items.length;
+            currentIdx = (currentIdx + dir + len) % len;
+            updateFlash();
+        }
+
+        function generateMC() {
+            const items = appData[currentTopic].items;
+            const item = items[Math.floor(Math.random() * items.length)];
+            const fb = document.getElementById('mc-fb'); fb.style.display = 'none';
+            document.getElementById('mc-next').classList.add('hidden');
+            let others = items.filter(i => i.a !== item.a).map(i => i.a);
+            others = [...new Set(others)].sort(() => Math.random() - 0.5).slice(0, 2);
+            const choices = [item.a, ...others].sort(() => Math.random() - 0.5);
+            document.getElementById('mc-q').innerText = `關於「${item.q}」：`;
+            const optArea = document.getElementById('mc-options'); optArea.innerHTML = '';
+            choices.forEach(text => {
+                const b = document.createElement('div'); b.className = 'option';
+                b.innerText = text.replace(/\|/g, '\n');
+                b.onclick = () => {
+                    if (fb.style.display === 'none') {
+                        fb.style.display = 'block';
+                        if (text === item.a) { fb.innerHTML = "✅ 正確"; fb.style.color = "#27ae60"; }
+                        else { fb.innerHTML = `❌ 錯誤。正確答案：<br>${item.a}`; fb.style.color = "#e74c3c"; saveWrong(currentTopic, item); }
+                        document.getElementById('mc-next').classList.remove('hidden');
+                    }
                 };
-            }
-
-            const startDrawing = (e) => { 
-                drawing = true; 
-                const { x, y } = getCoords(e);
-                ctx.beginPath();
-                ctx.moveTo(x, y);
-                if (e.type === 'touchstart') e.preventDefault();
-            };
-
-            const draw = (e) => {
-                if (!drawing) return;
-                const { x, y } = getCoords(e);
-                ctx.lineTo(x, y);
-                ctx.stroke();
-                if (e.type === 'touchmove') e.preventDefault();
-            };
-
-            const stopDrawing = () => { drawing = false; ctx.closePath(); };
-
-            canvas.addEventListener('mousedown', startDrawing);
-            canvas.addEventListener('mousemove', draw);
-            window.addEventListener('mouseup', stopDrawing);
-            canvas.addEventListener('touchstart', startDrawing, { passive: false });
-            canvas.addEventListener('touchmove', draw, { passive: false });
-            canvas.addEventListener('touchend', stopDrawing, { passive: false });
-        }
-
-        async function callGLM(prompt, base64Img = null) {
-            let messages = [
-                { 
-                    role: "system", 
-                    content: "你是一位親切的香港數學老師。請用繁體中文回覆。題目要極度簡單、文字少、數字小。不要使用 Markdown 符號如 ####。數學公式請用 LaTeX $ 包裹。排版要清晰美觀。如果是因式分解題目，請確保題目適合初學者。" 
-                }
-            ];
-
-            let userContent = [];
-            if (base64Img) {
-                userContent.push({
-                    type: "image_url",
-                    image_url: { url: base64Img }
-                });
-            }
-            userContent.push({ type: "text", text: prompt });
-            
-            messages.push({ role: "user", content: userContent });
-
-            const response = await fetch(glmEndpoint, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`
-                },
-                body: JSON.stringify({
-                    model: "glm-4.6v-flash",
-                    messages: messages,
-                    temperature: 0.2,
-                    top_p: 0.7
-                })
+                optArea.appendChild(b);
             });
-
-            if (!response.ok) throw new Error("API 請求失敗");
-            const data = await response.json();
-            return data.choices[0].message.content;
         }
 
-        genBtn.addEventListener('click', async () => {
-            genBtn.disabled = true;
-            genLoader.classList.remove('hidden');
-            questionContainer.innerHTML = `<div class="loader !border-slate-200 border-t-slate-800"></div>`;
-            
-            const prompt = `請出一題關於「${topicSelect.value}」的題目。要求：如果是代數或因式分解，請用 LaTeX $ 顯示公式。題目要簡潔，文字少於 20 字。`;
+        function showSection(id) {
+            currentTopic = 'wrong'; document.getElementById('main-nav').classList.add('hidden');
+            document.getElementById('content-area').classList.remove('hidden');
+            document.getElementById('flash-mode').classList.add('hidden'); document.getElementById('mc-mode').classList.add('hidden');
+            document.getElementById('wrong-mode').classList.remove('hidden'); renderWrongs();
+        }
 
-            try {
-                const content = await callGLM(prompt);
-                currentQuestion = content;
-                questionContainer.innerHTML = `<div class="text-xl font-bold text-slate-800">${content}</div>`;
-                analysisSection.classList.remove('opacity-50', 'pointer-events-none');
-                performRender(questionContainer);
-            } catch (e) {
-                questionContainer.innerText = "連線失敗，請檢查 API Key 或網路環境";
-            } finally {
-                genBtn.disabled = false;
-                genLoader.classList.add('hidden');
+        function saveWrong(topic, item) {
+            if (!wrongList.find(w => w.q === item.q)) {
+                wrongList.push({t: appData[topic].title, q: item.q, a: item.a});
+                localStorage.setItem('acc_v12_data', JSON.stringify(wrongList));
             }
-        });
+        }
 
-        analyzeBtn.addEventListener('click', async () => {
-            const imageData = canvas.toDataURL('image/png');
-            analyzeBtn.disabled = true;
-            analyzeLoader.classList.remove('hidden');
-            resultArea.classList.remove('hidden');
-            analysisOutput.innerHTML = `<p class="text-center py-6 text-slate-400 animate-pulse">老師正在批改您的算式...</p>`;
-            resultArea.scrollIntoView({ behavior: 'smooth' });
+        function renderWrongs() {
+            document.getElementById('wrong-list').innerHTML = wrongList.length ? 
+                wrongList.map(w => `<tr><td>${w.t}</td><td>${w.q}</td><td>${w.a}</td></tr>`).join('') : '<tr><td colspan="3" style="text-align:center;">暫無記錄</td></tr>';
+        }
 
-            const prompt = `這是學生對題目「${currentQuestion}」的手寫解答圖片。請批改此算式。
-            1. 先判斷對錯。
-            2. 使用 LaTeX 的 align* 環境給出完整正確的解答步驟。
-            3. 確保不要輸出 #### 等標記符號。`;
-
-            try {
-                const res = await callGLM(prompt, imageData);
-                const cleanOutput = res
-                    .split('\n').map(line => {
-                        if (line.includes('對') || line.includes('錯') || line.includes('解答') || line.includes('建議') || line.includes('正確') || line.includes('批改')) {
-                            return `<h4><span class="teacher-tag">老師</span> ${line.trim()}</h4>`;
-                        }
-                        return line;
-                    }).join('\n')
-                    .replace(/\n/g, '<br>');
-                
-                analysisOutput.innerHTML = cleanOutput;
-                setTimeout(() => performRender(analysisOutput), 50);
-            } catch (e) {
-                analysisOutput.innerText = "批改失敗，請稍後再試。";
-            } finally {
-                analyzeBtn.disabled = false;
-                analyzeLoader.classList.add('hidden');
-            }
-        });
-
-        document.getElementById('clearCanvas').addEventListener('click', () => ctx.clearRect(0, 0, canvas.width, canvas.height));
-        document.getElementById('closeResult').addEventListener('click', () => {
-            resultArea.classList.add('hidden');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        });
-
-        window.onload = () => { initCanvas(); performRender(document.body); };
+        function clearWrongs() { if(confirm("確定清空記錄嗎？")) { wrongList = []; localStorage.removeItem('acc_v12_data'); renderWrongs(); } }
     </script>
 </body>
 </html>
