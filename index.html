@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>會計溫習助手 Pro V15 - 完整核心版</title>
+    <title>會計溫習助手 Pro V16 - DSE 專業版</title>
     <style>
         :root {
             --primary: #2c3e50; --ratio: #27ae60; --limit: #16a085; --f-limit: #d35400; --principle: #8e44ad; --error: #e67e22; --entry: #c0392b; --note: #2980b9; --bg: #f4f7f6;
@@ -33,17 +33,17 @@
 <body>
     <div class="container">
         <header>
-            <h1>會計溫習助手 V15 (完整核心版)</h1>
-            <p style="text-align:center; font-size:0.8rem; color:var(--principle);">已補齊所有會計原則與報表局限</p>
+            <h1>會計溫習助手 V16</h1>
+            <p style="text-align:center; font-size:0.8rem; color:var(--principle);">專業術語更新：收入實現原則</p>
         </header>
 
         <div id="main-nav" class="main-menu">
-            <button class="menu-btn" style="background: var(--principle);" onclick="enterTopic('principle')">📜 會計原則 (10大核心項目)</button>
+            <button class="menu-btn" style="background: var(--principle);" onclick="enterTopic('principle')">📜 會計原則 (專業術語優化)</button>
             <button class="menu-btn" style="background: var(--error);" onclick="enterTopic('error')">⚠️ 錯誤更正 (7大類型)</button>
-            <button class="menu-btn" style="background: var(--ratio);" onclick="enterTopic('ratio')">📊 會計比率 (所有公式)</button>
-            <button class="menu-btn" style="background: var(--entry);" onclick="enterTopic('entry')">📓 重要會計分錄 (2025標準)</button>
-            <button class="menu-btn" style="background: var(--limit);" onclick="enterTopic('ratioLimit')">💡 會計比率的限制</button>
+            <button class="menu-btn" style="background: var(--ratio);" onclick="enterTopic('ratio')">📊 會計比率 (完整公式庫)</button>
+            <button class="menu-btn" style="background: var(--entry);" onclick="enterTopic('entry')">📓 重要會計分錄 (2025 DSE)</button>
             <button class="menu-btn" style="background: var(--f-limit);" onclick="enterTopic('fLimit')">📉 財務報表局限</button>
+            <button class="menu-btn" style="background: var(--limit);" onclick="enterTopic('ratioLimit')">💡 會計比率的限制</button>
         </div>
 
         <div id="sub-nav" class="sub-menu hidden">
@@ -60,7 +60,7 @@
                 <div class="card-container" onclick="this.querySelector('.card').classList.toggle('flipped')">
                     <div class="card" id="main-card">
                         <div class="card-front"><span class="tag">題目</span><div id="q-text" style="font-weight:bold; line-height:1.4;"></div></div>
-                        <div class="card-back" id="card-back-bg"><span class="tag" style="background:rgba(255,255,255,0.2); color:white;">定義/答案</span><div id="a-text" style="white-space: pre-line;"></div></div>
+                        <div class="card-back" id="card-back-bg"><span class="tag" style="background:rgba(255,255,255,0.2); color:white;">DSE 標準答案</span><div id="a-text" style="white-space: pre-line;"></div></div>
                     </div>
                 </div>
                 <div style="display:flex; justify-content: space-between; margin-top: 20px;">
@@ -83,50 +83,50 @@
     <script>
         const appData = {
             principle: { title: "會計原則", color: "#8e44ad", items: [
-                { q: "應計觀念 (Accrual Concept)", a: "收入與費用應在發生時（而非收付現金時）記錄於該會計期間。" },
-                { q: "穩健保守 (Prudence)", a: "不預計利益，但預計所有潛在損失。低估資產/收益，高估負債/費用。" },
-                { q: "配合原則 (Matching Principle)", a: "當期收入必須與產生該收入的費用在同一期間內相抵，以計算正確損益。" },
-                { q: "企業個體 (Business Entity)", a: "企業被視為獨立於業主的法律個體，業主個人帳目不可與企業帳目混淆。" },
-                { q: "持續經營 (Going Concern)", a: "假設企業將在可預見的未來繼續營運，資產按歷史成本而非清盤價入帳。" },
-                { q: "歷史成本 (Historical Cost)", a: "資產應按購買時的實際成本入帳，而不論目前的市場價值如何變化。" },
-                { q: "重大性 (Materiality)", a: "微小金額或不重要的項目可簡化處理（如垃圾桶直接列費用而非資產），除非會影響決策。" },
-                { q: "一貫性 (Consistency)", a: "會計方法（如折舊法）一旦選定，各年度應保持一致，以便進行比較。" },
-                { q: "貨幣衡量 (Money Measurement)", a: "只有能用貨幣表達的交易才能入帳，非金錢資訊（如員工素質）不列入報表。" },
-                { q: "變現原則 (Realisation)", a: "收入應在交易完成、貨物或服務已交付且客戶有義務付款時認列。" }
+                { q: "收入實現原則 (Revenue Recognition)", a: "收入應在交易完成、貨物或服務已交付予客戶，且客戶法律上有義務付款時認列。" },
+                { q: "應計觀念 (Accrual Concept)", a: "收入與費用應在發生時記錄，不論現金是否已收付。" },
+                { q: "配合原則 (Matching Principle)", a: "將某一期間的收入與產生該收入的相關費用互相抵銷，以計算準確損益。" },
+                { q: "穩健保守 (Prudence)", a: "預計所有可能的損失，但不預計未實現的利益。資產不應估值過高。" },
+                { q: "企業個體 (Business Entity)", a: "企業與業主的財務必須分開處理。業主對企業的投資視為負債（資本）。" },
+                { q: "持續經營 (Going Concern)", a: "假設企業將無限期營運，除非有證據證明即將清盤。資產通常以歷史成本列示。" },
+                { q: "歷史成本 (Historical Cost)", a: "資產應按原始購買價格記錄。此法較客觀但忽略了市價變化。" },
+                { q: "重大性 (Materiality)", a: "不重要的細微項目可不嚴格遵循會計準則（如文具雜項直接列作費用）。" },
+                { q: "一貫性 (Consistency)", a: "企業應在不同期間採用相同的會計政策（如折舊法），以便報表具可比性。" },
+                { q: "貨幣衡量 (Money Measurement)", a: "財務報表只記錄能以金錢表達的交易。非金錢因素（如管理質素）不予記錄。" }
             ]},
             error: { title: "錯誤更正類型", color: "#e67e22", items: [
-                { q: "遺漏錯誤", a: "一項交易完全沒有在帳簿中記錄。" },
-                { q: "帳名調亂", a: "入錯了相同類別的帳戶。" },
-                { q: "原則性錯誤", a: "入錯了不同類別的帳戶（資產變費用）。" },
-                { q: "原始分錄錯誤", a: "日記簿原始金額出錯，借貸雙方都入錯了相同錯額。" },
-                { q: "重複錯誤", a: "同一項交易重複入帳兩次。" },
-                { q: "顛倒入帳錯誤", a: "借貸方向完全相反（借貸位移）。" },
-                { q: "抵銷性錯誤", a: "多個錯誤金額剛好互相抵銷，試算表仍平衡。" }
+                { q: "遺漏錯誤", a: "整筆交易完全沒有入帳。" },
+                { q: "帳名調亂", a: "入錯了相同性質的帳戶（例如：甲入成了乙）。" },
+                { q: "原則性錯誤", a: "入錯了性質完全不同的帳戶（例如：維修費入成了資產）。" },
+                { q: "原始分錄錯誤", a: "日記簿一開始就寫錯金額，導致後續借貸雙邊皆錯。" },
+                { q: "重複錯誤", a: "同一筆交易入帳了兩次。" },
+                { q: "顛倒入帳", a: "借貸方向放反了（例如：應借卻貸，應貸卻借）。" },
+                { q: "抵銷性錯誤", a: "兩個錯誤剛好互相抵銷，試算表餘額仍平衡。" }
             ]},
             ratio: { title: "會計比率公式", color: "#27ae60", items: [
                 { q: "加成 (Mark-up)", a: "(毛利 / 銷貨成本) x 100%" },
                 { q: "毛利率 (Margin)", a: "(毛利 / 銷貨) x 100%" },
                 { q: "運用資金報酬率", a: "(利息及稅前淨利 / 平均運用資金) x 100%" },
-                { q: "速動比率", a: "(流動資產 - 存貨) : 流動負債" },
-                { q: "槓桿比率", a: "(非流動負債 + 優先股本) / (非流動負債 + 股東資本) x 100%" },
+                { q: "流動比率", a: "流動資產 / 流動負債" },
+                { q: "速動比率", a: "(流動資產 - 存貨) / 流動負債" },
                 { q: "市盈率 (P/E)", a: "每股普通股市價 / 每股盈利" }
             ]},
             entry: { title: "重要分錄", color: "#c0392b", items: [
                 { q: "註銷壞帳 (備抵法)", a: "借：呆帳準備\n貸：應收貨款" },
-                { q: "呆帳準備增加", a: "借：壞帳 (費用)\n貸：呆帳準備" },
+                { q: "呆帳準備增加", a: "借：壞帳\n貸：呆帳準備" },
                 { q: "提用貨物", a: "借：提用\n貸：購貨" },
-                { q: "發出免費貨物樣本", a: "借：推廣費用\n貸：購貨" }
-            ]},
-            ratioLimit: { title: "會計比率限制", color: "#16a085", items: [
-                { q: "資訊滯後", a: "會計信息來自過去成果，對預測未來發展無關。" },
-                { q: "通脹誤導", a: "基於歷史成本，沒有理會通脹影響。" },
-                { q: "忽略質性", a: "忽略公司管治、客戶忠誠和員工士氣。" }
+                { q: "發出免費樣本", a: "借：推廣費用\n貸：購貨" }
             ]},
             fLimit: { title: "財務報表局限", color: "#d35400", items: [
-                { q: "量化限制", a: "資料大都是量化的，難以反映產品質量等質素。" },
-                { q: "歷史性", a: "數據只與過往事件有關。" },
-                { q: "對比困難", a: "不同公司使用不同會計方法（如折舊）增加對比難度。" },
-                { q: "金錢時間值", a: "忽視金錢時間值，難以作精確跨年度對比。" }
+                { q: "資料性質", a: "資料大都是量化的，忽視了質性因素。" },
+                { q: "歷史數據", a: "數據反映過往，對預測未來能力有限。" },
+                { q: "比較困難", a: "不同公司採用不同會計方法會降低可比性。" },
+                { q: "金錢時間值", a: "忽視幣值隨時間的改變，難以作跨年對比。" }
+            ]},
+            ratioLimit: { title: "會計比率限制", color: "#16a085", items: [
+                { q: "預測限制", a: "會計信息屬過去成果，未必能預測未來。" },
+                { q: "通脹因素", a: "基於歷史成本，沒有考慮通貨膨脹。" },
+                { q: "質性缺失", a: "忽視了員工士氣及客戶忠誠度等關鍵訊息。" }
             ]}
         };
 
@@ -182,7 +182,7 @@
             let others = items.filter(i => i.a !== item.a).map(i => i.a);
             others = [...new Set(others)].sort(() => Math.random() - 0.5).slice(0, 2);
             const choices = [item.a, ...others].sort(() => Math.random() - 0.5);
-            document.getElementById('mc-q').innerText = `題目：${item.q}`;
+            document.getElementById('mc-q').innerText = `問題：${item.q}`;
             const optArea = document.getElementById('mc-options'); optArea.innerHTML = '';
             choices.forEach(text => {
                 const b = document.createElement('div'); b.className = 'option';
