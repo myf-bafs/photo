@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>會計溫習助手 Pro V14 - 全資料版</title>
+    <title>會計溫習助手 Pro V15 - 完整核心版</title>
     <style>
         :root {
-            --primary: #2c3e50; --ratio: #27ae60; --limit: #16a085; --f-limit: #d35400; --principle: #8e44ad; --error: #e67e22; --entry: #c0392b; --note: #2980b9; --wrong: #7f8c8d; --bg: #f4f7f6;
+            --primary: #2c3e50; --ratio: #27ae60; --limit: #16a085; --f-limit: #d35400; --principle: #8e44ad; --error: #e67e22; --entry: #c0392b; --note: #2980b9; --bg: #f4f7f6;
         }
         body { font-family: 'PingFang HK', 'Microsoft JhengHei', sans-serif; background: var(--bg); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         .container { max-width: 600px; width: 100%; }
@@ -33,16 +33,17 @@
 <body>
     <div class="container">
         <header>
-            <h1>會計溫習助手 V14 (全資料)</h1>
+            <h1>會計溫習助手 V15 (完整核心版)</h1>
+            <p style="text-align:center; font-size:0.8rem; color:var(--principle);">已補齊所有會計原則與報表局限</p>
         </header>
 
         <div id="main-nav" class="main-menu">
+            <button class="menu-btn" style="background: var(--principle);" onclick="enterTopic('principle')">📜 會計原則 (10大核心項目)</button>
             <button class="menu-btn" style="background: var(--error);" onclick="enterTopic('error')">⚠️ 錯誤更正 (7大類型)</button>
             <button class="menu-btn" style="background: var(--ratio);" onclick="enterTopic('ratio')">📊 會計比率 (所有公式)</button>
             <button class="menu-btn" style="background: var(--entry);" onclick="enterTopic('entry')">📓 重要會計分錄 (2025標準)</button>
             <button class="menu-btn" style="background: var(--limit);" onclick="enterTopic('ratioLimit')">💡 會計比率的限制</button>
             <button class="menu-btn" style="background: var(--f-limit);" onclick="enterTopic('fLimit')">📉 財務報表局限</button>
-            <button class="menu-btn" style="background: var(--principle);" onclick="enterTopic('principle')">📜 會計原則</button>
         </div>
 
         <div id="sub-nav" class="sub-menu hidden">
@@ -59,7 +60,7 @@
                 <div class="card-container" onclick="this.querySelector('.card').classList.toggle('flipped')">
                     <div class="card" id="main-card">
                         <div class="card-front"><span class="tag">題目</span><div id="q-text" style="font-weight:bold; line-height:1.4;"></div></div>
-                        <div class="card-back" id="card-back-bg"><span class="tag" style="background:rgba(255,255,255,0.2); color:white;">答案</span><div id="a-text" style="white-space: pre-line;"></div></div>
+                        <div class="card-back" id="card-back-bg"><span class="tag" style="background:rgba(255,255,255,0.2); color:white;">定義/答案</span><div id="a-text" style="white-space: pre-line;"></div></div>
                     </div>
                 </div>
                 <div style="display:flex; justify-content: space-between; margin-top: 20px;">
@@ -81,62 +82,51 @@
 
     <script>
         const appData = {
+            principle: { title: "會計原則", color: "#8e44ad", items: [
+                { q: "應計觀念 (Accrual Concept)", a: "收入與費用應在發生時（而非收付現金時）記錄於該會計期間。" },
+                { q: "穩健保守 (Prudence)", a: "不預計利益，但預計所有潛在損失。低估資產/收益，高估負債/費用。" },
+                { q: "配合原則 (Matching Principle)", a: "當期收入必須與產生該收入的費用在同一期間內相抵，以計算正確損益。" },
+                { q: "企業個體 (Business Entity)", a: "企業被視為獨立於業主的法律個體，業主個人帳目不可與企業帳目混淆。" },
+                { q: "持續經營 (Going Concern)", a: "假設企業將在可預見的未來繼續營運，資產按歷史成本而非清盤價入帳。" },
+                { q: "歷史成本 (Historical Cost)", a: "資產應按購買時的實際成本入帳，而不論目前的市場價值如何變化。" },
+                { q: "重大性 (Materiality)", a: "微小金額或不重要的項目可簡化處理（如垃圾桶直接列費用而非資產），除非會影響決策。" },
+                { q: "一貫性 (Consistency)", a: "會計方法（如折舊法）一旦選定，各年度應保持一致，以便進行比較。" },
+                { q: "貨幣衡量 (Money Measurement)", a: "只有能用貨幣表達的交易才能入帳，非金錢資訊（如員工素質）不列入報表。" },
+                { q: "變現原則 (Realisation)", a: "收入應在交易完成、貨物或服務已交付且客戶有義務付款時認列。" }
+            ]},
             error: { title: "錯誤更正類型", color: "#e67e22", items: [
-                { q: "遺漏錯誤 (Error of Omission)", a: "一項交易完全沒有在帳簿中記錄。" },
-                { q: "帳名調亂錯誤 (Error of Commission)", a: "入錯了相同類別的帳戶（例如：應收貨款甲入成了應收貨款乙）。" },
-                { q: "原則性錯誤 (Error of Principle)", a: "入錯了不同類別的帳戶（例如：購買汽車入成了交通費用，即資產變費用）。" },
-                { q: "原始分錄錯誤 (Error of Original Entry)", a: "日記簿的原始金額出錯，導致借貸雙方都入錯了相同的錯誤金額。" },
-                { q: "重複錯誤 (Error of Duplication)", a: "同一項交易在帳簿中重複入帳兩次。" },
-                { q: "顛倒入帳錯誤 (Error of Complete Reversal)", a: "借貸方向完全相反（例如：應該借記現金貸記銷貨，卻變成了借記銷貨貸記現金）。" },
-                { q: "抵銷性錯誤 (Compensating Error)", a: "兩個或多個獨立的錯誤，其金額剛好互相抵銷，使試算表依然平衡。" }
+                { q: "遺漏錯誤", a: "一項交易完全沒有在帳簿中記錄。" },
+                { q: "帳名調亂", a: "入錯了相同類別的帳戶。" },
+                { q: "原則性錯誤", a: "入錯了不同類別的帳戶（資產變費用）。" },
+                { q: "原始分錄錯誤", a: "日記簿原始金額出錯，借貸雙方都入錯了相同錯額。" },
+                { q: "重複錯誤", a: "同一項交易重複入帳兩次。" },
+                { q: "顛倒入帳錯誤", a: "借貸方向完全相反（借貸位移）。" },
+                { q: "抵銷性錯誤", a: "多個錯誤金額剛好互相抵銷，試算表仍平衡。" }
             ]},
             ratio: { title: "會計比率公式", color: "#27ae60", items: [
                 { q: "加成 (Mark-up)", a: "(毛利 / 銷貨成本) x 100%" },
-                { q: "毛利率 (Gross Profit Margin)", a: "(毛利 / 銷貨) x 100%" },
-                { q: "淨利率 (Net Profit Margin)", a: "(稅前淨利 / 銷貨) x 100%" },
-                { q: "運用資金報酬率 (ROCE)", a: "(利息及稅前淨利 / 平均運用資金) x 100%" },
-                { q: "運用資金 (獨資)", a: "資本帳餘額" },
-                { q: "運用資金 (合夥)", a: "資本帳餘額 + 往來帳餘額" },
-                { q: "運用資金 (有限公司)", a: "非流動負債 + 股東資本" },
-                { q: "流動比率 (Current Ratio)", a: "流動資產 : 流動負債" },
-                { q: "速動比率 (Quick Ratio)", a: "(流動資產 - 存貨) : 流動負債" },
-                { q: "存貨周轉率 (次數)", a: "銷貨成本 / 平均存貨" },
-                { q: "存貨周轉期 (天數)", a: "(平均存貨 / 銷貨成本) x 365" },
-                { q: "賒銷期限 (天數)", a: "(平均應收貨款 / 賒銷) x 365" },
-                { q: "賒購期限 (天數)", a: "(平均應付貨款 / 賒購) x 365" },
-                { q: "應收貨款周轉率 (次)", a: "賒銷 / 平均應收貨款" },
-                { q: "應付貨款周轉率 (次)", a: "賒購 / 平均應付貨款" },
-                { q: "總資產周轉率 (次)", a: "銷貨 / 資產總額" },
-                { q: "每股盈利 (EPS)", a: "(稅後淨利 - 優先股息) / 普通股發行股數" },
-                { q: "槓桿比率 (Gearing Ratio)", a: "(非流動負債 + 優先股本) / (非流動負債 + 股東資本) x 100%" },
-                { q: "市盈率 (P/E Ratio)", a: "每股普通股市價 / 每股盈利" }
+                { q: "毛利率 (Margin)", a: "(毛利 / 銷貨) x 100%" },
+                { q: "運用資金報酬率", a: "(利息及稅前淨利 / 平均運用資金) x 100%" },
+                { q: "速動比率", a: "(流動資產 - 存貨) : 流動負債" },
+                { q: "槓桿比率", a: "(非流動負債 + 優先股本) / (非流動負債 + 股東資本) x 100%" },
+                { q: "市盈率 (P/E)", a: "每股普通股市價 / 每股盈利" }
             ]},
-            entry: { title: "重要分錄 (備抵法)", color: "#c0392b", items: [
-                { q: "註銷壞帳 (Writing off bad debts)", a: "借：呆帳準備\n貸：應收貨款" },
-                { q: "呆帳準備增加 (Adjustment)", a: "借：壞帳 (損益表費用)\n貸：呆帳準備" },
-                { q: "呆帳準備減少 (Adjustment)", a: "借：呆帳準備\n貸：壞帳 (損益表收益)" },
-                { q: "提用貨物 (Drawings of goods)", a: "借：提用\n貸：購貨" },
-                { q: "發出免費貨物樣本", a: "借：推廣費用\n貸：購貨" },
-                { q: "收到免費貨物樣本", a: "不需作日記分錄，只需作備忘錄。" },
-                { q: "存貨損失 (Stock loss)", a: "借：存貨損失\n貸：購貨" },
-                { q: "銷貨退回", a: "借：銷貨退回\n貸：應收貨款" },
-                { q: "購貨退出", a: "借：應付貨款\n貸：購貨退出" }
+            entry: { title: "重要分錄", color: "#c0392b", items: [
+                { q: "註銷壞帳 (備抵法)", a: "借：呆帳準備\n貸：應收貨款" },
+                { q: "呆帳準備增加", a: "借：壞帳 (費用)\n貸：呆帳準備" },
+                { q: "提用貨物", a: "借：提用\n貸：購貨" },
+                { q: "發出免費貨物樣本", a: "借：推廣費用\n貸：購貨" }
             ]},
-            ratioLimit: { title: "會計比率的限制", color: "#16a085", items: [
-                { q: "限制：時間性", a: "會計信息來自過去的成果而非當前的資訊，對預測企業未來的發展無關。" },
-                { q: "限制：歷史成本", a: "基於沒有理會通貨膨脹的歷史成本計算，對評估現時業績表現可能產生誤導。" },
-                { q: "限制：質性訊息", a: "忽略了質性訊息（如公司管治、客戶忠誠和員工士氣），這些對企業成敗至關重要。" }
+            ratioLimit: { title: "會計比率限制", color: "#16a085", items: [
+                { q: "資訊滯後", a: "會計信息來自過去成果，對預測未來發展無關。" },
+                { q: "通脹誤導", a: "基於歷史成本，沒有理會通脹影響。" },
+                { q: "忽略質性", a: "忽略公司管治、客戶忠誠和員工士氣。" }
             ]},
             fLimit: { title: "財務報表局限", color: "#d35400", items: [
-                { q: "局限：資料性質", a: "資料大都是量化的，無法反映非量化因素。" },
-                { q: "局限：時效性", a: "數據只與過往事件有關，具有滯後性。" },
-                { q: "局限：可比性", a: "不同的會計方法及政策（如不同的折舊率）增加了跨公司對比的難度。" },
-                { q: "局限：金錢時間值", a: "忽視金錢的時間值，令用家難以為公司作跨年度的準確對比。" }
-            ]},
-            principle: { title: "會計原則", color: "#8e44ad", items: [
-                { q: "應計觀念", a: "收入與費用應在發生時記錄，而非收付現金時記錄。" },
-                { q: "穩健保守", a: "不預計利益，但預計所有潛在損失；低估資產，高估負債。" },
-                { q: "企業個體", a: "企業主的個人財務必須與企業帳目完全分開。" }
+                { q: "量化限制", a: "資料大都是量化的，難以反映產品質量等質素。" },
+                { q: "歷史性", a: "數據只與過往事件有關。" },
+                { q: "對比困難", a: "不同公司使用不同會計方法（如折舊）增加對比難度。" },
+                { q: "金錢時間值", a: "忽視金錢時間值，難以作精確跨年度對比。" }
             ]}
         };
 
@@ -149,15 +139,8 @@
             document.getElementById('current-topic-name').innerText = appData[t].title;
         }
 
-        function goHome() {
-            document.getElementById('sub-nav').classList.add('hidden');
-            document.getElementById('main-nav').classList.remove('hidden');
-        }
-
-        function exitToSubNav() {
-            document.getElementById('content-area').classList.add('hidden');
-            document.getElementById('sub-nav').classList.remove('hidden');
-        }
+        function goHome() { document.getElementById('sub-nav').classList.add('hidden'); document.getElementById('main-nav').classList.remove('hidden'); }
+        function exitToSubNav() { document.getElementById('content-area').classList.add('hidden'); document.getElementById('sub-nav').classList.remove('hidden'); }
 
         function startMode(m) {
             document.getElementById('sub-nav').classList.add('hidden');
@@ -165,9 +148,7 @@
             document.getElementById('study-mode').classList.toggle('hidden', m !== 'study');
             document.getElementById('flash-mode').classList.toggle('hidden', m !== 'flash');
             document.getElementById('mc-mode').classList.toggle('hidden', m !== 'mc');
-            if (m === 'study') renderStudy();
-            else if (m === 'flash') { currentIdx = 0; updateFlash(); }
-            else generateMC();
+            if (m === 'study') renderStudy(); else if (m === 'flash') { currentIdx = 0; updateFlash(); } else generateMC();
         }
 
         function renderStudy() {
@@ -201,7 +182,7 @@
             let others = items.filter(i => i.a !== item.a).map(i => i.a);
             others = [...new Set(others)].sort(() => Math.random() - 0.5).slice(0, 2);
             const choices = [item.a, ...others].sort(() => Math.random() - 0.5);
-            document.getElementById('mc-q').innerText = `關於「${item.q}」：`;
+            document.getElementById('mc-q').innerText = `題目：${item.q}`;
             const optArea = document.getElementById('mc-options'); optArea.innerHTML = '';
             choices.forEach(text => {
                 const b = document.createElement('div'); b.className = 'option';
