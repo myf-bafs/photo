@@ -47,4 +47,176 @@
 
         <div id="sub-nav" class="sub-menu hidden">
             <h2 id="current-topic-name" style="grid-column: 1/-1; text-align: center; color: var(--primary); font-size: 1.2rem;"></h2>
-            <button class="menu-btn" style="background: #34495e; justify-content:center;" onclick
+            <button class="menu-btn" style="background: #34495e; justify-content:center;" onclick="startMode('study')">📖 1. 溫習清單</button>
+            <button class="menu-btn" style="background: #34495e; justify-content:center;" onclick="startMode('flash')">🗂️ 2. 閃卡溫習</button>
+            <button class="menu-btn" style="background: #34495e; justify-content:center; grid-column: 1/-1;" onclick="startMode('mc')">✍️ 3. MC 測試</button>
+            <button class="menu-btn back-btn" onclick="goHome()">⬅ 返回主目錄</button>
+        </div>
+
+        <div id="content-area" class="content-box hidden">
+            <div id="study-mode" class="hidden"><div id="study-list-content"></div></div>
+            <div id="flash-mode" class="hidden">
+                <div class="card-container" onclick="this.querySelector('.card').classList.toggle('flipped')">
+                    <div class="card" id="main-card">
+                        <div class="card-front"><span class="tag">題目</span><div id="q-text" style="font-weight:bold; line-height:1.4;"></div></div>
+                        <div class="card-back" id="card-back-bg"><span class="tag" style="background:rgba(255,255,255,0.2); color:white;">答案</span><div id="a-text" style="white-space: pre-line;"></div></div>
+                    </div>
+                </div>
+                <div style="display:flex; justify-content: space-between; margin-top: 20px;">
+                    <button class="menu-btn" style="background:#bdc3c7; width:45%; padding:15px; justify-content:center;" onclick="changeCard(-1)">上一個</button>
+                    <button class="menu-btn" style="background:var(--primary); width:45%; padding:15px; justify-content:center;" onclick="changeCard(1)">下一個</button>
+                </div>
+            </div>
+            <div id="mc-mode" class="hidden">
+                <div class="quiz-container">
+                    <div id="mc-q" style="font-weight:bold; margin-bottom:15px;"></div>
+                    <div id="mc-options"></div>
+                    <div id="mc-fb" style="display:none; padding:15px; border-radius:10px; margin-top:15px; font-weight:bold;"></div>
+                    <button id="mc-next" class="menu-btn hidden" style="background:var(--primary); width:100%; margin-top:10px; justify-content:center;" onclick="generateMC()">下一題</button>
+                </div>
+            </div>
+            <button class="menu-btn back-btn" onclick="exitToSubNav()">⬅ 返回模式選擇</button>
+        </div>
+    </div>
+
+    <script>
+        const appData = {
+            error: { title: "錯誤更正類型", color: "#e67e22", items: [
+                { q: "遺漏錯誤 (Error of Omission)", a: "一項交易完全沒有在帳簿中記錄。" },
+                { q: "帳名調亂錯誤 (Error of Commission)", a: "入錯了相同類別的帳戶（例如：應收貨款甲入成了應收貨款乙）。" },
+                { q: "原則性錯誤 (Error of Principle)", a: "入錯了不同類別的帳戶（例如：購買汽車入成了交通費用，即資產變費用）。" },
+                { q: "原始分錄錯誤 (Error of Original Entry)", a: "日記簿的原始金額出錯，導致借貸雙方都入錯了相同的錯誤金額。" },
+                { q: "重複錯誤 (Error of Duplication)", a: "同一項交易在帳簿中重複入帳兩次。" },
+                { q: "顛倒入帳錯誤 (Error of Complete Reversal)", a: "借貸方向完全相反（例如：應該借記現金貸記銷貨，卻變成了借記銷貨貸記現金）。" },
+                { q: "抵銷性錯誤 (Compensating Error)", a: "兩個或多個獨立的錯誤，其金額剛好互相抵銷，使試算表依然平衡。" }
+            ]},
+            ratio: { title: "會計比率公式", color: "#27ae60", items: [
+                { q: "加成 (Mark-up)", a: "(毛利 / 銷貨成本) x 100%" },
+                { q: "毛利率 (Gross Profit Margin)", a: "(毛利 / 銷貨) x 100%" },
+                { q: "淨利率 (Net Profit Margin)", a: "(稅前淨利 / 銷貨) x 100%" },
+                { q: "運用資金報酬率 (ROCE)", a: "(利息及稅前淨利 / 平均運用資金) x 100%" },
+                { q: "運用資金 (獨資)", a: "資本帳餘額" },
+                { q: "運用資金 (合夥)", a: "資本帳餘額 + 往來帳餘額" },
+                { q: "運用資金 (有限公司)", a: "非流動負債 + 股東資本" },
+                { q: "流動比率 (Current Ratio)", a: "流動資產 : 流動負債" },
+                { q: "速動比率 (Quick Ratio)", a: "(流動資產 - 存貨) : 流動負債" },
+                { q: "存貨周轉率 (次數)", a: "銷貨成本 / 平均存貨" },
+                { q: "存貨周轉期 (天數)", a: "(平均存貨 / 銷貨成本) x 365" },
+                { q: "賒銷期限 (天數)", a: "(平均應收貨款 / 賒銷) x 365" },
+                { q: "賒購期限 (天數)", a: "(平均應付貨款 / 賒購) x 365" },
+                { q: "應收貨款周轉率 (次)", a: "賒銷 / 平均應收貨款" },
+                { q: "應付貨款周轉率 (次)", a: "賒購 / 平均應付貨款" },
+                { q: "總資產周轉率 (次)", a: "銷貨 / 資產總額" },
+                { q: "每股盈利 (EPS)", a: "(稅後淨利 - 優先股息) / 普通股發行股數" },
+                { q: "槓桿比率 (Gearing Ratio)", a: "(非流動負債 + 優先股本) / (非流動負債 + 股東資本) x 100%" },
+                { q: "市盈率 (P/E Ratio)", a: "每股普通股市價 / 每股盈利" }
+            ]},
+            entry: { title: "重要分錄 (備抵法)", color: "#c0392b", items: [
+                { q: "註銷壞帳 (Writing off bad debts)", a: "借：呆帳準備\n貸：應收貨款" },
+                { q: "呆帳準備增加 (Adjustment)", a: "借：壞帳 (損益表費用)\n貸：呆帳準備" },
+                { q: "呆帳準備減少 (Adjustment)", a: "借：呆帳準備\n貸：壞帳 (損益表收益)" },
+                { q: "提用貨物 (Drawings of goods)", a: "借：提用\n貸：購貨" },
+                { q: "發出免費貨物樣本", a: "借：推廣費用\n貸：購貨" },
+                { q: "收到免費貨物樣本", a: "不需作日記分錄，只需作備忘錄。" },
+                { q: "存貨損失 (Stock loss)", a: "借：存貨損失\n貸：購貨" },
+                { q: "銷貨退回", a: "借：銷貨退回\n貸：應收貨款" },
+                { q: "購貨退出", a: "借：應付貨款\n貸：購貨退出" }
+            ]},
+            ratioLimit: { title: "會計比率的限制", color: "#16a085", items: [
+                { q: "限制：時間性", a: "會計信息來自過去的成果而非當前的資訊，對預測企業未來的發展無關。" },
+                { q: "限制：歷史成本", a: "基於沒有理會通貨膨脹的歷史成本計算，對評估現時業績表現可能產生誤導。" },
+                { q: "限制：質性訊息", a: "忽略了質性訊息（如公司管治、客戶忠誠和員工士氣），這些對企業成敗至關重要。" }
+            ]},
+            fLimit: { title: "財務報表局限", color: "#d35400", items: [
+                { q: "局限：資料性質", a: "資料大都是量化的，無法反映非量化因素。" },
+                { q: "局限：時效性", a: "數據只與過往事件有關，具有滯後性。" },
+                { q: "局限：可比性", a: "不同的會計方法及政策（如不同的折舊率）增加了跨公司對比的難度。" },
+                { q: "局限：金錢時間值", a: "忽視金錢的時間值，令用家難以為公司作跨年度的準確對比。" }
+            ]},
+            principle: { title: "會計原則", color: "#8e44ad", items: [
+                { q: "應計觀念", a: "收入與費用應在發生時記錄，而非收付現金時記錄。" },
+                { q: "穩健保守", a: "不預計利益，但預計所有潛在損失；低估資產，高估負債。" },
+                { q: "企業個體", a: "企業主的個人財務必須與企業帳目完全分開。" }
+            ]}
+        };
+
+        let currentTopic = ''; let currentIdx = 0;
+
+        function enterTopic(t) {
+            currentTopic = t;
+            document.getElementById('main-nav').classList.add('hidden');
+            document.getElementById('sub-nav').classList.remove('hidden');
+            document.getElementById('current-topic-name').innerText = appData[t].title;
+        }
+
+        function goHome() {
+            document.getElementById('sub-nav').classList.add('hidden');
+            document.getElementById('main-nav').classList.remove('hidden');
+        }
+
+        function exitToSubNav() {
+            document.getElementById('content-area').classList.add('hidden');
+            document.getElementById('sub-nav').classList.remove('hidden');
+        }
+
+        function startMode(m) {
+            document.getElementById('sub-nav').classList.add('hidden');
+            document.getElementById('content-area').classList.remove('hidden');
+            document.getElementById('study-mode').classList.toggle('hidden', m !== 'study');
+            document.getElementById('flash-mode').classList.toggle('hidden', m !== 'flash');
+            document.getElementById('mc-mode').classList.toggle('hidden', m !== 'mc');
+            if (m === 'study') renderStudy();
+            else if (m === 'flash') { currentIdx = 0; updateFlash(); }
+            else generateMC();
+        }
+
+        function renderStudy() {
+            document.getElementById('study-list-content').innerHTML = appData[currentTopic].items.map(i => `
+                <div class="study-list-item" style="border-left-color:${appData[currentTopic].color}">
+                    <div class="study-q">${i.q}</div>
+                    <div class="study-a">${i.a}</div>
+                </div>
+            `).join('');
+        }
+
+        function updateFlash() {
+            const item = appData[currentTopic].items[currentIdx];
+            document.getElementById('q-text').innerText = item.q;
+            document.getElementById('a-text').innerText = item.a;
+            document.getElementById('card-back-bg').style.background = appData[currentTopic].color;
+            document.getElementById('main-card').classList.remove('flipped');
+        }
+
+        function changeCard(d) {
+            const len = appData[currentTopic].items.length;
+            currentIdx = (currentIdx + d + len) % len;
+            updateFlash();
+        }
+
+        function generateMC() {
+            const items = appData[currentTopic].items;
+            const item = items[Math.floor(Math.random() * items.length)];
+            const fb = document.getElementById('mc-fb'); fb.style.display = 'none';
+            document.getElementById('mc-next').classList.add('hidden');
+            let others = items.filter(i => i.a !== item.a).map(i => i.a);
+            others = [...new Set(others)].sort(() => Math.random() - 0.5).slice(0, 2);
+            const choices = [item.a, ...others].sort(() => Math.random() - 0.5);
+            document.getElementById('mc-q').innerText = `關於「${item.q}」：`;
+            const optArea = document.getElementById('mc-options'); optArea.innerHTML = '';
+            choices.forEach(text => {
+                const b = document.createElement('div'); b.className = 'option';
+                b.innerText = text;
+                b.onclick = () => {
+                    if (fb.style.display === 'none') {
+                        fb.style.display = 'block';
+                        if (text === item.a) { fb.innerHTML = "✅ 正確"; fb.style.color = "#27ae60"; }
+                        else { fb.innerHTML = `❌ 錯誤。正確答案：<br>${item.a}`; fb.style.color = "#e74c3c"; }
+                        document.getElementById('mc-next').classList.remove('hidden');
+                    }
+                };
+                optArea.appendChild(b);
+            });
+        }
+    </script>
+</body>
+</html>
