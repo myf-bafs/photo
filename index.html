@@ -3,204 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>會計溫習助手 Pro V13 (DSE 2025)</title>
+    <title>會計溫習助手 Pro V14 - 全資料版</title>
     <style>
         :root {
             --primary: #2c3e50; --ratio: #27ae60; --limit: #16a085; --f-limit: #d35400; --principle: #8e44ad; --error: #e67e22; --entry: #c0392b; --note: #2980b9; --wrong: #7f8c8d; --bg: #f4f7f6;
         }
-        body { font-family: 'PingFang HK', 'Microsoft JhengHei', sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        body { font-family: 'PingFang HK', 'Microsoft JhengHei', sans-serif; background: var(--bg); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         .container { max-width: 600px; width: 100%; }
-        
-        /* 選單樣式 */
-        .main-menu { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 10px; }
-        .menu-btn { padding: 20px; border: none; border-radius: 12px; color: white; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.3s; text-align: left; display: flex; align-items: center; justify-content: space-between; }
+        .main-menu { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 10px; }
+        .menu-btn { padding: 18px; border: none; border-radius: 12px; color: white; font-size: 1.05rem; font-weight: bold; cursor: pointer; transition: 0.3s; text-align: left; display: flex; align-items: center; justify-content: space-between; }
         .sub-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
         .back-btn { background: #34495e; grid-column: 1 / -1; margin-top: 10px; justify-content: center; }
-
-        /* 內容區樣式 */
-        .content-box { margin-top: 20px; width: 100%; }
+        .content-box { margin-top: 15px; width: 100%; }
         .card-container { perspective: 1000px; width: 100%; height: 350px; cursor: pointer; }
-        .card { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .card { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; border-radius: 20px; box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
         .card.flipped { transform: rotateY(180deg); }
         .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 25px; box-sizing: border-box; border-radius: 20px; background: white; }
         .card-back { transform: rotateY(180deg); color: white; font-weight: bold; }
-        
-        /* 溫習頁面清單樣式 */
-        .study-list-item { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid var(--primary); }
+        .study-list-item { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .study-q { font-weight: bold; color: var(--primary); margin-bottom: 5px; }
-        .study-a { font-size: 0.95rem; color: #555; line-height: 1.5; }
-
-        /* MC 樣式 */
-        .quiz-container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-        .option { display: block; width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #eee; border-radius: 12px; text-align: left; background: white; font-size: 1rem; cursor: pointer; }
-        
+        .study-a { font-size: 0.95rem; color: #444; line-height: 1.5; white-space: pre-line; }
+        .quiz-container { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .option { display: block; width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #eee; border-radius: 12px; text-align: left; background: white; font-size: 0.95rem; cursor: pointer; box-sizing: border-box; }
         .hidden { display: none !important; }
-        h1 { color: var(--primary); font-size: 1.5rem; margin-bottom: 5px; text-align: center; }
-        .tag { font-size: 0.8rem; background: rgba(0,0,0,0.05); padding: 5px 12px; border-radius: 20px; margin-bottom: 10px; color: #666; }
+        h1 { color: var(--primary); font-size: 1.4rem; margin-bottom: 5px; text-align: center; }
+        .tag { font-size: 0.75rem; background: rgba(0,0,0,0.05); padding: 4px 10px; border-radius: 20px; margin-bottom: 10px; color: #666; }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>會計溫習助手 Pro V13</h1>
-            <p style="text-align:center; font-size:0.8rem; color:var(--f-limit);">新增：財務報表局限 & 溫習模式</p>
+            <h1>會計溫習助手 V14 (全資料)</h1>
         </header>
 
         <div id="main-nav" class="main-menu">
-            <button class="menu-btn" style="background: var(--f-limit);" onclick="enterTopic('fLimit')">📉 財務報表局限 (新)</button>
+            <button class="menu-btn" style="background: var(--error);" onclick="enterTopic('error')">⚠️ 錯誤更正 (7大類型)</button>
+            <button class="menu-btn" style="background: var(--ratio);" onclick="enterTopic('ratio')">📊 會計比率 (所有公式)</button>
+            <button class="menu-btn" style="background: var(--entry);" onclick="enterTopic('entry')">📓 重要會計分錄 (2025標準)</button>
             <button class="menu-btn" style="background: var(--limit);" onclick="enterTopic('ratioLimit')">💡 會計比率的限制</button>
-            <button class="menu-btn" style="background: var(--ratio);" onclick="enterTopic('ratio')">📊 會計比率公式</button>
-            <button class="menu-btn" style="background: var(--entry);" onclick="enterTopic('entry')">📓 重要會計分錄</button>
-            <button class="menu-btn" style="background: var(--error);" onclick="enterTopic('error')">⚠️ 錯誤更正定義</button>
-            <button class="menu-btn" style="background: var(--wrong);" onclick="showSection('wrong')">📝 錯題簿</button>
+            <button class="menu-btn" style="background: var(--f-limit);" onclick="enterTopic('fLimit')">📉 財務報表局限</button>
+            <button class="menu-btn" style="background: var(--principle);" onclick="enterTopic('principle')">📜 會計原則</button>
         </div>
 
         <div id="sub-nav" class="sub-menu hidden">
-            <h2 id="current-topic-name" style="grid-column: 1/-1; text-align: center; color: var(--primary);"></h2>
-            <button class="menu-btn" style="background: #34495e; justify-content:center;" onclick="startMode('study')">📖 1. 溫習清單</button>
-            <button class="menu-btn" style="background: #34495e; justify-content:center;" onclick="startMode('flash')">🗂️ 2. 閃卡溫習</button>
-            <button class="menu-btn" style="background: #34495e; justify-content:center;" onclick="startMode('mc')">✍️ 3. MC 測試</button>
-            <button class="menu-btn back-btn" onclick="goHome()">⬅ 返回主目錄</button>
-        </div>
-
-        <div id="content-area" class="content-box hidden">
-            
-            <div id="study-mode" class="hidden">
-                <div id="study-list-content"></div>
-            </div>
-
-            <div id="flash-mode" class="hidden">
-                <div class="card-container" onclick="this.querySelector('.card').classList.toggle('flipped')">
-                    <div class="card" id="main-card">
-                        <div class="card-front"><span class="tag">題目</span><div id="q-text" style="font-weight:bold; line-height:1.4;"></div></div>
-                        <div class="card-back" id="card-back-bg"><span class="tag" style="background:rgba(255,255,255,0.2); color:white;">答案</span><div id="a-text"></div></div>
-                    </div>
-                </div>
-                <div style="display:flex; justify-content: space-between; margin-top: 20px;">
-                    <button class="menu-btn" style="background:#bdc3c7; width:45%; padding:15px; justify-content:center;" onclick="changeCard(-1)">上一個</button>
-                    <button class="menu-btn" style="background:var(--primary); width:45%; padding:15px; justify-content:center;" onclick="changeCard(1)">下一個</button>
-                </div>
-            </div>
-
-            <div id="mc-mode" class="hidden">
-                <div class="quiz-container">
-                    <div id="mc-q" style="font-weight:bold; margin-bottom:15px;"></div>
-                    <div id="mc-options"></div>
-                    <div id="mc-fb" style="display:none; padding:15px; border-radius:10px; margin-top:15px; font-weight:bold;"></div>
-                    <button id="mc-next" class="menu-btn hidden" style="background:var(--primary); width:100%; margin-top:15px; justify-content:center;" onclick="generateMC()">下一題</button>
-                </div>
-            </div>
-
-            <button class="menu-btn back-btn" onclick="exitToSubNav()">⬅ 返回模式選擇</button>
-        </div>
-    </div>
-
-    <script>
-        const appData = {
-            fLimit: { title: "財務報表局限", color: "#d35400", items: [
-                { q: "資料性質 (量化)", a: "財務報表資料大多是量化的，難以完全反映企業的質素（如品牌價值）。" },
-                { q: "時間性 (過往)", a: "數據只與過往事件有關，不一定能準確反映目前的狀況或預測未來發展。" },
-                { q: "比較難度 (會計政策)", a: "不同的會計方法及政策（如折舊法）增加了跨公司對比的難度。" },
-                { q: "年度對比 (金錢時間值)", a: "忽視了金錢的時間值，令用家難以為公司進行準確的跨年度對比。" }
-            ]},
-            ratioLimit: { title: "會計比率限制", color: "#16a085", items: [
-                { q: "預測能力", a: "基於過往資訊，未必與預測企業未來發展有關。" },
-                { q: "通貨膨脹", a: "基於歷史成本，沒有理會通脹影響，評估業績時可能產生誤導。" },
-                { q: "質性訊息", a: "忽略了公司管治、客戶忠誠和員工士氣等關鍵訊息。" }
-            ]},
-            ratio: { title: "會計比率公式", color: "#27ae60", items: [
-                { q: "加成 (Mark-up)", a: "(毛利 / 銷貨成本) x 100%" },
-                { q: "毛利率 (Margin)", a: "(毛利 / 銷貨) x 100%" },
-                { q: "運用資金報酬率 (ROCE)", a: "(利息及稅前淨利 / 平均運用資金) x 100%" },
-                { q: "速動比率", a: "(流動資產 - 存貨) : 流動負債" }
-            ]},
-            entry: { title: "重要分錄", color: "#c0392b", items: [
-                { q: "註銷壞帳 (備抵法)", a: "借：呆帳準備 | 貸：應收貨款" },
-                { q: "發出免費貨物樣本", a: "借：推廣費用 | 貸：購貨" },
-                { q: "存貨損失 (Stock Loss)", a: "借：存貨損失 | 貸：購貨" }
-            ]},
-            error: { title: "錯誤定義", color: "#e67e22", items: [
-                { q: "原則性錯誤", a: "入錯不同類別帳戶 (如資產入作費用)。" },
-                { q: "帳名調亂", a: "入錯同類別帳戶。" }
-            ]}
-        };
-
-        let currentTopic = ''; let currentIdx = 0;
-
-        function enterTopic(topicId) {
-            currentTopic = topicId;
-            document.getElementById('main-nav').classList.add('hidden');
-            document.getElementById('sub-nav').classList.remove('hidden');
-            document.getElementById('current-topic-name').innerText = appData[topicId].title;
-        }
-
-        function goHome() { document.getElementById('sub-nav').classList.add('hidden'); document.getElementById('main-nav').classList.remove('hidden'); }
-        function exitToSubNav() {
-            document.getElementById('content-area').classList.add('hidden');
-            document.getElementById('sub-nav').classList.remove('hidden');
-        }
-
-        function startMode(mode) {
-            document.getElementById('sub-nav').classList.add('hidden');
-            document.getElementById('content-area').classList.remove('hidden');
-            
-            document.getElementById('study-mode').classList.toggle('hidden', mode !== 'study');
-            document.getElementById('flash-mode').classList.toggle('hidden', mode !== 'flash');
-            document.getElementById('mc-mode').classList.toggle('hidden', mode !== 'mc');
-
-            if (mode === 'study') renderStudyList();
-            else if (mode === 'flash') { currentIdx = 0; updateFlash(); }
-            else generateMC();
-        }
-
-        function renderStudyList() {
-            const listArea = document.getElementById('study-list-content');
-            listArea.innerHTML = appData[currentTopic].items.map(i => `
-                <div class="study-list-item" style="border-left-color:${appData[currentTopic].color}">
-                    <div class="study-q">${i.q}</div>
-                    <div class="study-a">${i.a.replace(/\|/g, '<br>')}</div>
-                </div>
-            `).join('');
-        }
-
-        function updateFlash() {
-            const item = appData[currentTopic].items[currentIdx];
-            document.getElementById('q-text').innerText = item.q;
-            document.getElementById('a-text').innerText = item.a.replace(/\|/g, '\n');
-            document.getElementById('card-back-bg').style.background = appData[currentTopic].color;
-            document.getElementById('main-card').classList.remove('flipped');
-        }
-
-        function changeCard(dir) {
-            const len = appData[currentTopic].items.length;
-            currentIdx = (currentIdx + dir + len) % len;
-            updateFlash();
-        }
-
-        function generateMC() {
-            const items = appData[currentTopic].items;
-            const item = items[Math.floor(Math.random() * items.length)];
-            const fb = document.getElementById('mc-fb'); fb.style.display = 'none';
-            document.getElementById('mc-next').classList.add('hidden');
-            let others = items.filter(i => i.a !== item.a).map(i => i.a);
-            others = [...new Set(others)].sort(() => Math.random() - 0.5).slice(0, 2);
-            const choices = [item.a, ...others].sort(() => Math.random() - 0.5);
-            document.getElementById('mc-q').innerText = `關於「${item.q}」：`;
-            const optArea = document.getElementById('mc-options'); optArea.innerHTML = '';
-            choices.forEach(text => {
-                const b = document.createElement('div'); b.className = 'option';
-                b.innerText = text.replace(/\|/g, '\n');
-                b.onclick = () => {
-                    if (fb.style.display === 'none') {
-                        fb.style.display = 'block';
-                        if (text === item.a) { fb.innerHTML = "✅ 正確"; fb.style.color = "#27ae60"; }
-                        else { fb.innerHTML = `❌ 錯誤。正確答案：<br>${item.a}`; fb.style.color = "#e74c3c"; }
-                        document.getElementById('mc-next').classList.remove('hidden');
-                    }
-                };
-                optArea.appendChild(b);
-            });
-        }
-    </script>
-</body>
-</html>
+            <h2 id="current-topic-name" style="grid-column: 1/-1; text-align: center; color: var(--primary); font-size: 1.2rem;"></h2>
+            <button class="menu-btn" style="background: #34495e; justify-content:center;" onclick
