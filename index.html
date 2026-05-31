@@ -3,200 +3,585 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>會計溫習助手 Pro V16 - DSE 專業版</title>
+    <title>產業達人：職業分類十秒限時挑戰</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #2c3e50; --ratio: #27ae60; --limit: #16a085; --f-limit: #d35400; --principle: #8e44ad; --error: #e67e22; --entry: #c0392b; --note: #2980b9; --bg: #f4f7f6;
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
         }
-        body { font-family: 'PingFang HK', 'Microsoft JhengHei', sans-serif; background: var(--bg); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        .container { max-width: 600px; width: 100%; }
-        .main-menu { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 10px; }
-        .menu-btn { padding: 18px; border: none; border-radius: 12px; color: white; font-size: 1.05rem; font-weight: bold; cursor: pointer; transition: 0.3s; text-align: left; display: flex; align-items: center; justify-content: space-between; }
-        .sub-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-        .back-btn { background: #34495e; grid-column: 1 / -1; margin-top: 10px; justify-content: center; }
-        .content-box { margin-top: 15px; width: 100%; }
-        .card-container { perspective: 1000px; width: 100%; height: 350px; cursor: pointer; }
-        .card { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; border-radius: 20px; box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
-        .card.flipped { transform: rotateY(180deg); }
-        .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 25px; box-sizing: border-box; border-radius: 20px; background: white; }
-        .card-back { transform: rotateY(180deg); color: white; font-weight: bold; }
-        .study-list-item { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .study-q { font-weight: bold; color: var(--primary); margin-bottom: 5px; }
-        .study-a { font-size: 0.95rem; color: #444; line-height: 1.5; white-space: pre-line; }
-        .quiz-container { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-        .option { display: block; width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #eee; border-radius: 12px; text-align: left; background: white; font-size: 0.95rem; cursor: pointer; box-sizing: border-box; }
-        .hidden { display: none !important; }
-        h1 { color: var(--primary); font-size: 1.4rem; margin-bottom: 5px; text-align: center; }
-        .tag { font-size: 0.75rem; background: rgba(0,0,0,0.05); padding: 4px 10px; border-radius: 20px; margin-bottom: 10px; color: #666; }
+        /* 答錯抖動動畫 */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        /* 答對縮放動畫 */
+        @keyframes pulse-correct {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+        .animate-correct {
+            animation: pulse-correct 0.4s ease-in-out;
+        }
     </style>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>會計溫習助手 V16</h1>
-            <p style="text-align:center; font-size:0.8rem; color:var(--principle);">專業術語更新：收入實現原則</p>
-        </header>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between select-none">
 
-        <div id="main-nav" class="main-menu">
-            <button class="menu-btn" style="background: var(--principle);" onclick="enterTopic('principle')">📜 會計原則 (專業術語優化)</button>
-            <button class="menu-btn" style="background: var(--error);" onclick="enterTopic('error')">⚠️ 錯誤更正 (7大類型)</button>
-            <button class="menu-btn" style="background: var(--ratio);" onclick="enterTopic('ratio')">📊 會計比率 (完整公式庫)</button>
-            <button class="menu-btn" style="background: var(--entry);" onclick="enterTopic('entry')">📓 重要會計分錄 (2025 DSE)</button>
-            <button class="menu-btn" style="background: var(--f-limit);" onclick="enterTopic('fLimit')">📉 財務報表局限</button>
-            <button class="menu-btn" style="background: var(--limit);" onclick="enterTopic('ratioLimit')">💡 會計比率的限制</button>
+    <!-- 頂部導航欄 (極簡化) -->
+    <header class="w-full border-b border-slate-900 bg-slate-900/40 backdrop-blur-md px-6 py-4">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-wider bg-gradient-to-r from-emerald-400 via-amber-400 to-indigo-400 bg-clip-text text-transparent flex items-center gap-2">
+                <span>⏱️</span> 產業達人：10秒分類極速應戰
+            </h1>
+            <div class="flex items-center space-x-3">
+                <button id="soundToggleBtn" onclick="toggleSound()" class="p-2 bg-slate-900 hover:bg-slate-800 transition rounded-lg border border-slate-800 text-sm" title="切換音效">
+                    🔊 音效
+                </button>
+            </div>
         </div>
+    </header>
 
-        <div id="sub-nav" class="sub-menu hidden">
-            <h2 id="current-topic-name" style="grid-column: 1/-1; text-align: center; color: var(--primary); font-size: 1.2rem;"></h2>
-            <button class="menu-btn" style="background: #34495e; justify-content:center;" onclick="startMode('study')">📖 1. 溫習清單</button>
-            <button class="menu-btn" style="background: #34495e; justify-content:center;" onclick="startMode('flash')">🗂️ 2. 閃卡溫習</button>
-            <button class="menu-btn" style="background: #34495e; justify-content:center; grid-column: 1/-1;" onclick="startMode('mc')">✍️ 3. MC 測試</button>
-            <button class="menu-btn back-btn" onclick="goHome()">⬅ 返回主目錄</button>
-        </div>
+    <!-- 主遊戲區域 -->
+    <main class="flex-grow flex items-center justify-center p-4">
+        <div class="w-full max-w-2xl">
 
-        <div id="content-area" class="content-box hidden">
-            <div id="study-mode" class="hidden"><div id="study-list-content"></div></div>
-            <div id="flash-mode" class="hidden">
-                <div class="card-container" onclick="this.querySelector('.card').classList.toggle('flipped')">
-                    <div class="card" id="main-card">
-                        <div class="card-front"><span class="tag">題目</span><div id="q-text" style="font-weight:bold; line-height:1.4;"></div></div>
-                        <div class="card-back" id="card-back-bg"><span class="tag" style="background:rgba(255,255,255,0.2); color:white;">DSE 標準答案</span><div id="a-text" style="white-space: pre-line;"></div></div>
+            <!-- ================= 1. 開始畫面 ================= -->
+            <section id="menuScreen" class="bg-slate-900 border border-slate-800/80 rounded-2xl p-6 md:p-8 text-center space-y-6 shadow-xl">
+                <div class="space-y-3">
+                    <div class="inline-block bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full text-xs font-semibold">
+                        ⚡ 挑戰難度：每題僅限10秒！
+                    </div>
+                    <h2 class="text-2xl md:text-3xl font-bold">手腦並用，極速分類！</h2>
+                    <p class="text-slate-400 text-sm max-w-md mx-auto leading-relaxed">
+                        本遊戲精選 7 種代表性職業。每題你只有 <strong class="text-rose-400">10 秒鐘</strong> 能做出選擇！答錯或超時將立刻顯示解析。
+                    </p>
+                </div>
+
+                <!-- 三大產業簡化說明卡 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-left">
+                    <div class="p-3 bg-emerald-950/20 border border-emerald-900/30 rounded-xl">
+                        <span class="font-bold text-emerald-400 flex items-center gap-1 mb-1">🌱 第一產業</span>
+                        <p class="text-slate-400">直接獲取大自然資源（農、林、漁、牧、採礦）。</p>
+                    </div>
+                    <div class="p-3 bg-amber-950/20 border border-amber-900/30 rounded-xl">
+                        <span class="font-bold text-amber-400 flex items-center gap-1 mb-1">🏭 第二產業</span>
+                        <p class="text-slate-400">加工原料與營造建築（手工業、製造業、營造業）。</p>
+                    </div>
+                    <div class="p-3 bg-indigo-950/20 border border-indigo-900/30 rounded-xl">
+                        <span class="font-bold text-indigo-400 flex items-center gap-1 mb-1">🤝 第三產業</span>
+                        <p class="text-slate-400">提供商業服務、物流、中介與勞務（服務業）。</p>
                     </div>
                 </div>
-                <div style="display:flex; justify-content: space-between; margin-top: 20px;">
-                    <button class="menu-btn" style="background:#bdc3c7; width:45%; padding:15px; justify-content:center;" onclick="changeCard(-1)">上一個</button>
-                    <button class="menu-btn" style="background:var(--primary); width:45%; padding:15px; justify-content:center;" onclick="changeCard(1)">下一個</button>
+
+                <button onclick="startGame()" class="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold rounded-xl transition shadow-lg shadow-orange-950/40 text-lg">
+                    進入時空倒數挑戰 🚀
+                </button>
+            </section>
+
+            <!-- ================= 2. 答題畫面 ================= -->
+            <section id="gameScreen" class="hidden space-y-6">
+                <!-- 狀態顯示與 10秒計時條 -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+                    <div class="flex justify-between items-center text-sm">
+                        <div class="flex items-center space-x-4">
+                            <div>
+                                <span class="text-xs text-slate-500 block">當前進度</span>
+                                <span class="font-bold"><span id="currentNum" class="text-indigo-400 text-lg">1</span> / 7 題</span>
+                            </div>
+                            <div>
+                                <span class="text-xs text-slate-500 block">答對題數</span>
+                                <span id="scoreVal" class="text-emerald-400 font-bold text-lg">0</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 倒計時秒數 -->
+                        <div class="text-right">
+                            <span class="text-xs text-slate-500 block">剩餘時間</span>
+                            <span id="timerText" class="text-xl font-black text-amber-400">10s</span>
+                        </div>
+                    </div>
+
+                    <!-- 10秒動態減少進度條 -->
+                    <div class="w-full bg-slate-950 h-3 rounded-full overflow-hidden border border-slate-850">
+                        <div id="timerBar" class="bg-amber-400 h-full w-full transition-all duration-100 ease-linear"></div>
+                    </div>
                 </div>
-            </div>
-            <div id="mc-mode" class="hidden">
-                <div class="quiz-container">
-                    <div id="mc-q" style="font-weight:bold; margin-bottom:15px;"></div>
-                    <div id="mc-options"></div>
-                    <div id="mc-fb" style="display:none; padding:15px; border-radius:10px; margin-top:15px; font-weight:bold;"></div>
-                    <button id="mc-next" class="menu-btn hidden" style="background:var(--primary); width:100%; margin-top:10px; justify-content:center;" onclick="generateMC()">下一題</button>
+
+                <!-- 職業主字卡 (帶有特殊反饋圖層) -->
+                <div id="card" class="relative bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 text-center space-y-4 shadow-lg transition-all duration-300 overflow-hidden">
+                    
+                    <!-- 特效遮罩層 (答對/答錯/超時閃爍) -->
+                    <div id="effectOverlay" class="absolute inset-0 pointer-events-none opacity-0 transition-all duration-300 flex items-center justify-center z-10">
+                        <div id="effectIcon" class="text-8xl transform scale-50 transition-all duration-300"></div>
+                    </div>
+
+                    <div id="jobEmoji" class="text-6xl md:text-7xl transition-transform duration-300">💁</div>
+                    <div class="space-y-1">
+                        <h3 id="jobName" class="text-2xl md:text-3xl font-extrabold text-white">職業名稱</h3>
+                        <p id="jobDesc" class="text-slate-400 text-sm max-w-sm mx-auto italic"></p>
+                    </div>
+                    <div class="text-[10px] text-slate-600 hidden md:block">
+                        💡 鍵盤快速鍵：按 <kbd class="px-1 bg-slate-800 rounded text-slate-400">1</kbd>、<kbd class="px-1 bg-slate-800 rounded text-slate-400">2</kbd>、<kbd class="px-1 bg-slate-800 rounded text-slate-400">3</kbd> 即可直接作答
+                    </div>
                 </div>
+
+                <!-- 產業選擇大按鈕 -->
+                <div id="actionButtons" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <button onclick="submitAnswer(1)" class="group active:scale-95 transition relative bg-slate-900 border border-slate-800 hover:border-emerald-500/70 p-4 rounded-xl text-center space-y-1">
+                        <span class="text-2xl">🌱</span>
+                        <div class="font-bold text-emerald-400">第一產業</div>
+                        <div class="text-[10px] text-slate-500">原料開採與農漁牧</div>
+                    </button>
+                    <button onclick="submitAnswer(2)" class="group active:scale-95 transition relative bg-slate-900 border border-slate-800 hover:border-amber-500/70 p-4 rounded-xl text-center space-y-1">
+                        <span class="text-2xl">🏭</span>
+                        <div class="font-bold text-amber-400">第二產業</div>
+                        <div class="text-[10px] text-slate-500">工業製造與營建</div>
+                    </button>
+                    <button onclick="submitAnswer(3)" class="group active:scale-95 transition relative bg-slate-900 border border-slate-800 hover:border-indigo-500/70 p-4 rounded-xl text-center space-y-1">
+                        <span class="text-2xl">🤝</span>
+                        <div class="font-bold text-indigo-400">第三產業</div>
+                        <div class="text-[10px] text-slate-500">商業貿易與服務</div>
+                    </button>
+                </div>
+            </section>
+
+            <!-- ================= 3. 結果與評估畫面 ================= -->
+            <section id="resultsScreen" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 text-center space-y-6 shadow-xl">
+                <div class="space-y-2">
+                    <div class="text-5xl">🏆</div>
+                    <h2 class="text-2xl font-bold">限時挑戰結束！</h2>
+                    <p class="text-slate-400 text-sm">這是您今日在計時賽中的戰績：</p>
+                </div>
+
+                <!-- 數據面板 -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-slate-950/50 p-4 rounded-xl border border-slate-800">
+                        <span class="text-xs text-slate-500 block">答對率</span>
+                        <span id="finalAccuracy" class="text-2xl font-bold text-emerald-400">0%</span>
+                    </div>
+                    <div class="bg-slate-950/50 p-4 rounded-xl border border-slate-800">
+                        <span class="text-xs text-slate-500 block">答對題數</span>
+                        <span id="finalScore" class="text-2xl font-bold text-amber-400">0 / 7</span>
+                    </div>
+                </div>
+
+                <!-- 糾錯學習本 (如果有答錯/超時) -->
+                <div id="mistakesBox" class="text-left space-y-3">
+                    <h4 class="text-xs font-bold text-rose-400 uppercase tracking-wider">📝 錯題與超時複習筆記：</h4>
+                    <div id="mistakesList" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        <!-- 錯題列表 -->
+                    </div>
+                </div>
+
+                <!-- 控制鈕 -->
+                <div class="flex gap-3">
+                    <button onclick="returnToMenu()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-755 rounded-xl transition text-sm">
+                        🏠 返回主選單
+                    </button>
+                    <button onclick="startGame()" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 font-bold rounded-xl transition text-sm">
+                        🔄 再戰一次
+                    </button>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- 答錯/超時即時反饋彈窗 (錯1時顯示答案) -->
+    <div id="explanationModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-5 transform scale-100 transition-all">
+            <div class="text-center space-y-1">
+                <div id="modalTitle" class="text-3xl font-extrabold text-rose-500">❌ 回答錯誤</div>
+                <h3 class="text-sm font-bold text-slate-400">請緊記以下正確產業分類：</h3>
             </div>
-            <button class="menu-btn back-btn" onclick="exitToSubNav()">⬅ 返回模式選擇</button>
+            
+            <div class="bg-slate-950/50 p-4 rounded-xl border border-slate-800 space-y-2 text-sm">
+                <div class="flex justify-between border-b border-slate-800 pb-1.5 text-xs text-slate-400">
+                    <span>題目職業：</span>
+                    <span id="expJob" class="font-bold text-white">職業</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-800 pb-1.5 text-xs text-slate-400">
+                    <span>正確答案：</span>
+                    <span id="expCorrect" class="font-bold text-emerald-400">第一產業</span>
+                </div>
+                <p id="expText" class="text-xs text-slate-300 leading-relaxed pt-1"></p>
+            </div>
+
+            <button onclick="closeExplanation()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition text-sm">
+                理解了，下一題 👉
+            </button>
         </div>
     </div>
 
+    <!-- 頁腳 -->
+    <footer class="w-full text-center py-4 text-[10px] text-slate-700 border-t border-slate-950">
+        <p>© 2026 產業分類挑戰遊戲 - 10秒競速版. 專為高效學習設計.</p>
+    </footer>
+
+    <!-- ================= 遊戲核心邏輯 ================= -->
     <script>
-        const appData = {
-            principle: { title: "會計原則", color: "#8e44ad", items: [
-                { q: "收入實現原則 (Revenue Recognition)", a: "收入應在交易完成、貨物或服務已交付予客戶，且客戶法律上有義務付款時認列。" },
-                { q: "應計觀念 (Accrual Concept)", a: "收入與費用應在發生時記錄，不論現金是否已收付。" },
-                { q: "配合原則 (Matching Principle)", a: "將某一期間的收入與產生該收入的相關費用互相抵銷，以計算準確損益。" },
-                { q: "穩健保守 (Prudence)", a: "預計所有可能的損失，但不預計未實現的利益。資產不應估值過高。" },
-                { q: "企業個體 (Business Entity)", a: "企業與業主的財務必須分開處理。業主對企業的投資視為負債（資本）。" },
-                { q: "持續經營 (Going Concern)", a: "假設企業將無限期營運，除非有證據證明即將清盤。資產通常以歷史成本列示。" },
-                { q: "歷史成本 (Historical Cost)", a: "資產應按原始購買價格記錄。此法較客觀但忽略了市價變化。" },
-                { q: "重大性 (Materiality)", a: "不重要的細微項目可不嚴格遵循會計準則（如文具雜項直接列作費用）。" },
-                { q: "一貫性 (Consistency)", a: "企業應在不同期間採用相同的會計政策（如折舊法），以便報表具可比性。" },
-                { q: "貨幣衡量 (Money Measurement)", a: "財務報表只記錄能以金錢表達的交易。非金錢因素（如管理質素）不予記錄。" }
-            ]},
-            error: { title: "錯誤更正類型", color: "#e67e22", items: [
-                { q: "遺漏錯誤", a: "整筆交易完全沒有入帳。" },
-                { q: "帳名調亂", a: "入錯了相同性質的帳戶（例如：甲入成了乙）。" },
-                { q: "原則性錯誤", a: "入錯了性質完全不同的帳戶（例如：維修費入成了資產）。" },
-                { q: "原始分錄錯誤", a: "日記簿一開始就寫錯金額，導致後續借貸雙邊皆錯。" },
-                { q: "重複錯誤", a: "同一筆交易入帳了兩次。" },
-                { q: "顛倒入帳", a: "借貸方向放反了（例如：應借卻貸，應貸卻借）。" },
-                { q: "抵銷性錯誤", a: "兩個錯誤剛好互相抵銷，試算表餘額仍平衡。" }
-            ]},
-            ratio: { title: "會計比率公式", color: "#27ae60", items: [
-                { q: "加成 (Mark-up)", a: "(毛利 / 銷貨成本) x 100%" },
-                { q: "毛利率 (Margin)", a: "(毛利 / 銷貨) x 100%" },
-                { q: "運用資金報酬率", a: "(利息及稅前淨利 / 平均運用資金) x 100%" },
-                { q: "流動比率", a: "流動資產 / 流動負債" },
-                { q: "速動比率", a: "(流動資產 - 存貨) / 流動負債" },
-                { q: "市盈率 (P/E)", a: "每股普通股市價 / 每股盈利" }
-            ]},
-            entry: { title: "重要分錄", color: "#c0392b", items: [
-                { q: "註銷壞帳 (備抵法)", a: "借：呆帳準備\n貸：應收貨款" },
-                { q: "呆帳準備增加", a: "借：壞帳\n貸：呆帳準備" },
-                { q: "提用貨物", a: "借：提用\n貸：購貨" },
-                { q: "發出免費樣本", a: "借：推廣費用\n貸：購貨" }
-            ]},
-            fLimit: { title: "財務報表局限", color: "#d35400", items: [
-                { q: "資料性質", a: "資料大都是量化的，忽視了質性因素。" },
-                { q: "歷史數據", a: "數據反映過往，對預測未來能力有限。" },
-                { q: "比較困難", a: "不同公司採用不同會計方法會降低可比性。" },
-                { q: "金錢時間值", a: "忽視幣值隨時間的改變，難以作跨年對比。" }
-            ]},
-            ratioLimit: { title: "會計比率限制", color: "#16a085", items: [
-                { q: "預測限制", a: "會計信息屬過去成果，未必能預測未來。" },
-                { q: "通脹因素", a: "基於歷史成本，沒有考慮通貨膨脹。" },
-                { q: "質性缺失", a: "忽視了員工士氣及客戶忠誠度等關鍵訊息。" }
-            ]}
-        };
+        // 音效模組
+        let audioCtx = null;
+        let isSoundEnabled = true;
 
-        let currentTopic = ''; let currentIdx = 0;
-
-        function enterTopic(t) {
-            currentTopic = t;
-            document.getElementById('main-nav').classList.add('hidden');
-            document.getElementById('sub-nav').classList.remove('hidden');
-            document.getElementById('current-topic-name').innerText = appData[t].title;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
         }
 
-        function goHome() { document.getElementById('sub-nav').classList.add('hidden'); document.getElementById('main-nav').classList.remove('hidden'); }
-        function exitToSubNav() { document.getElementById('content-area').classList.add('hidden'); document.getElementById('sub-nav').classList.remove('hidden'); }
+        function playSound(type) {
+            if (!isSoundEnabled) return;
+            initAudio();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
 
-        function startMode(m) {
-            document.getElementById('sub-nav').classList.add('hidden');
-            document.getElementById('content-area').classList.remove('hidden');
-            document.getElementById('study-mode').classList.toggle('hidden', m !== 'study');
-            document.getElementById('flash-mode').classList.toggle('hidden', m !== 'flash');
-            document.getElementById('mc-mode').classList.toggle('hidden', m !== 'mc');
-            if (m === 'study') renderStudy(); else if (m === 'flash') { currentIdx = 0; updateFlash(); } else generateMC();
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+
+                if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+                    osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'incorrect') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(140, now);
+                    osc.frequency.setValueAtTime(110, now + 0.12);
+                    gain.gain.setValueAtTime(0.18, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                } else if (type === 'tick') {
+                    // 每秒急促的心跳聲
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(800, now);
+                    gain.gain.setValueAtTime(0.05, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.06);
+                } else if (type === 'finish') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(783.99, now + 0.15);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                }
+            } catch (e) {
+                console.warn("無法啟動音效: ", e);
+            }
         }
 
-        function renderStudy() {
-            document.getElementById('study-list-content').innerHTML = appData[currentTopic].items.map(i => `
-                <div class="study-list-item" style="border-left-color:${appData[currentTopic].color}">
-                    <div class="study-q">${i.q}</div>
-                    <div class="study-a">${i.a}</div>
-                </div>
-            `).join('');
+        function toggleSound() {
+            isSoundEnabled = !isSoundEnabled;
+            const btn = document.getElementById('soundToggleBtn');
+            btn.innerHTML = isSoundEnabled ? '🔊 音效' : '🔇 靜音';
+            btn.classList.toggle('bg-red-950/30', !isSoundEnabled);
+            btn.classList.toggle('border-red-900/30', !isSoundEnabled);
         }
 
-        function updateFlash() {
-            const item = appData[currentTopic].items[currentIdx];
-            document.getElementById('q-text').innerText = item.q;
-            document.getElementById('a-text').innerText = item.a;
-            document.getElementById('card-back-bg').style.background = appData[currentTopic].color;
-            document.getElementById('main-card').classList.remove('flipped');
+        // 指定的 7 個職業數據
+        const professions = [
+            { id: 'a', name: "侍應", category: 3, emoji: "💁", desc: "在餐廳內接待客人、點餐、端送盤碟並提供貼心服務。", exp: "「侍應」主要職責是提供飲食服務與人際溝通，不直接生產實體商品，因此歸類於【第三產業】（服務業）。" },
+            { id: 'b', name: "農夫", category: 1, emoji: "🧑‍🌾", desc: "在田野間犁地、播種、灌溉，細心培育大自然的農產品。", exp: "「農夫」直接從土地中獲取小麥、稻米等大自然天然資源，因此歸類於【第一產業】（農業）。" },
+            { id: 'c', name: "製衣工人", category: 2, emoji: "🧵", desc: "在服裝加工廠操作裁縫與縫紉機器，將布料拼裝成衣服。", exp: "「製衣工人」將棉花、布料等原材料加工製造成實體衣物商品，因此歸類於【第二產業】（工業與製造業）。" },
+            { id: 'd', name: "保險經紀", category: 3, emoji: "💼", desc: "為客戶規劃保險、評估風險、提供合適的財務保障規劃服務。", exp: "「保險經紀」提供非物質性的金融保險服務、風險諮詢，因此歸類於【第三產業】（金融服務與中介業）。" },
+            { id: 'e', name: "建築工人", category: 2, emoji: "👷", desc: "在建築工地砌磚、灌漿、焊接，合力建造高大建築物。", exp: "「建築工人」負責將水泥、鋼筋加工組裝成房屋、橋樑等有形設施，因此歸類於【第二產業】（營造與建築業）。" },
+            { id: 'f', name: "漁夫", category: 1, emoji: "🎣", desc: "在大海中捕撈野生的魚、蝦與貝類，收穫豐富的海鮮資源。", exp: "「漁夫」直接捕獲並利用天然的海洋野生生物資源，因此歸類於【第一產業】（漁業）。" },
+            { id: 'g', name: "速遞員", category: 3, emoji: "🛵", desc: "騎著機車在大街小巷穿梭，迅速安全地遞送客戶的包裹。", exp: "「速遞員」提供物流運輸和商品流通的代勞服務，不製造產品，因此歸類於【第三產業】（交通運輸與物流業）。" }
+        ];
+
+        // 遊戲狀態與計時器變數
+        let currentIdx = 0;
+        let score = 0;
+        let sortedQueue = [];
+        let mistakes = [];
+        
+        let timeLeft = 10; // 每題 10 秒
+        let timerInterval = null;
+        let isWaitingForNext = false; // 是否正在展示答題反饋或彈窗
+
+        // 鍵盤快捷鍵作答
+        window.addEventListener('keydown', (e) => {
+            if (document.getElementById('gameScreen').classList.contains('hidden')) return;
+            if (!document.getElementById('explanationModal').classList.contains('hidden')) return;
+            if (isWaitingForNext) return;
+
+            if (e.key === '1') submitAnswer(1);
+            if (e.key === '2') submitAnswer(2);
+            if (e.key === '3') submitAnswer(3);
+        });
+
+        // 開始挑戰
+        function startGame() {
+            currentIdx = 0;
+            score = 0;
+            mistakes = [];
+            isWaitingForNext = false;
+            
+            // 隨機打亂這 7 道題目
+            sortedQueue = [...professions].sort(() => Math.random() - 0.5);
+
+            document.getElementById('menuScreen').classList.add('hidden');
+            document.getElementById('resultsScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+
+            renderCard();
         }
 
-        function changeCard(d) {
-            const len = appData[currentTopic].items.length;
-            currentIdx = (currentIdx + d + len) % len;
-            updateFlash();
+        // 開始每題 10 秒計時器
+        function resetAndStartTimer() {
+            clearInterval(timerInterval);
+            timeLeft = 10;
+            updateTimerUI();
+
+            timerInterval = setInterval(() => {
+                if (isWaitingForNext) return;
+
+                timeLeft -= 0.1;
+                
+                // 每整秒響起警示音 (當時間少於3秒)
+                if (timeLeft > 0 && Math.abs((timeLeft % 1) - 0.9) < 0.05 && timeLeft <= 3.2) {
+                    playSound('tick');
+                }
+
+                if (timeLeft <= 0) {
+                    timeLeft = 0;
+                    clearInterval(timerInterval);
+                    handleTimeOut(); // 超時處理
+                }
+                updateTimerUI();
+            }, 100);
         }
 
-        function generateMC() {
-            const items = appData[currentTopic].items;
-            const item = items[Math.floor(Math.random() * items.length)];
-            const fb = document.getElementById('mc-fb'); fb.style.display = 'none';
-            document.getElementById('mc-next').classList.add('hidden');
-            let others = items.filter(i => i.a !== item.a).map(i => i.a);
-            others = [...new Set(others)].sort(() => Math.random() - 0.5).slice(0, 2);
-            const choices = [item.a, ...others].sort(() => Math.random() - 0.5);
-            document.getElementById('mc-q').innerText = `問題：${item.q}`;
-            const optArea = document.getElementById('mc-options'); optArea.innerHTML = '';
-            choices.forEach(text => {
-                const b = document.createElement('div'); b.className = 'option';
-                b.innerText = text;
-                b.onclick = () => {
-                    if (fb.style.display === 'none') {
-                        fb.style.display = 'block';
-                        if (text === item.a) { fb.innerHTML = "✅ 正確"; fb.style.color = "#27ae60"; }
-                        else { fb.innerHTML = `❌ 錯誤。正確答案：<br>${item.a}`; fb.style.color = "#e74c3c"; }
-                        document.getElementById('mc-next').classList.remove('hidden');
-                    }
-                };
-                optArea.appendChild(b);
+        // 更新計時器的視覺效果
+        function updateTimerUI() {
+            const timerBar = document.getElementById('timerBar');
+            const timerText = document.getElementById('timerText');
+            const percentage = (timeLeft / 10) * 100;
+            
+            timerBar.style.width = `${percentage}%`;
+            timerText.textContent = `${Math.ceil(timeLeft)}s`;
+
+            if (timeLeft <= 3) {
+                // 緊迫警告：變為紅色並震盪
+                timerBar.className = "bg-rose-500 h-full transition-all duration-100 ease-linear";
+                timerText.className = "text-xl font-black text-rose-500 animate-pulse";
+            } else {
+                timerBar.className = "bg-amber-400 h-full transition-all duration-100 ease-linear";
+                timerText.className = "text-xl font-black text-amber-400";
+            }
+        }
+
+        // 渲染題目卡
+        function renderCard() {
+            isWaitingForNext = false;
+            const currentJob = sortedQueue[currentIdx];
+            
+            // 進度與得分
+            document.getElementById('currentNum').textContent = currentIdx + 1;
+            document.getElementById('scoreVal').textContent = score;
+
+            // 卡片文字
+            document.getElementById('jobEmoji').textContent = currentJob.emoji;
+            document.getElementById('jobName').textContent = currentJob.name;
+            document.getElementById('jobDesc').textContent = `「${currentJob.desc}」`;
+
+            // 清理所有特效
+            const card = document.getElementById('card');
+            card.className = "relative bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 text-center space-y-4 shadow-lg transition-all duration-300 overflow-hidden";
+            
+            const overlay = document.getElementById('effectOverlay');
+            overlay.className = "absolute inset-0 pointer-events-none opacity-0 transition-all duration-300 flex items-center justify-center z-10";
+            
+            // 重新啟動 10 秒計時
+            resetAndStartTimer();
+        }
+
+        // 送出答案
+        function submitAnswer(chosen) {
+            if (isWaitingForNext) return;
+            isWaitingForNext = true;
+            clearInterval(timerInterval); // 停止計時
+
+            const currentJob = sortedQueue[currentIdx];
+            const isCorrect = (currentJob.category === chosen);
+
+            const card = document.getElementById('card');
+            const overlay = document.getElementById('effectOverlay');
+            const icon = document.getElementById('effectIcon');
+
+            if (isCorrect) {
+                score++;
+                playSound('correct');
+
+                // 答對動態特效：綠色外框發光、浮現勾勾
+                card.classList.add('border-emerald-500', 'bg-emerald-950/20', 'animate-correct');
+                overlay.className = "absolute inset-0 pointer-events-none opacity-100 bg-emerald-500/10 transition-all duration-200 flex items-center justify-center z-10";
+                icon.textContent = "✓";
+                icon.className = "text-8xl text-emerald-400 transform scale-100 transition-all duration-200 font-bold";
+
+                // 短暫延遲後前往下一題
+                setTimeout(() => {
+                    nextQuestion();
+                }, 850);
+
+            } else {
+                // 答錯立即記錄
+                mistakes.push({
+                    job: currentJob,
+                    chosen: chosen,
+                    type: 'wrong'
+                });
+                playSound('incorrect');
+
+                // 答錯動態特效：紅色外框發光、卡片劇烈震動、浮現叉叉
+                card.classList.add('border-rose-500', 'bg-rose-950/20', 'animate-shake');
+                overlay.className = "absolute inset-0 pointer-events-none opacity-100 bg-rose-500/10 transition-all duration-200 flex items-center justify-center z-10";
+                icon.textContent = "✗";
+                icon.className = "text-8xl text-rose-500 transform scale-100 transition-all duration-200 font-bold";
+
+                // 特效展示後，錯1題立即顯示觀念解析
+                setTimeout(() => {
+                    showExplanation(currentJob, 'wrong');
+                }, 850);
+            }
+        }
+
+        // 超時處理
+        function handleTimeOut() {
+            if (isWaitingForNext) return;
+            isWaitingForNext = true;
+            
+            const currentJob = sortedQueue[currentIdx];
+            mistakes.push({
+                job: currentJob,
+                chosen: null,
+                type: 'timeout'
             });
+
+            playSound('incorrect');
+
+            const card = document.getElementById('card');
+            const overlay = document.getElementById('effectOverlay');
+            const icon = document.getElementById('effectIcon');
+
+            // 超時特效：黃色警示、卡片微抖、顯示時鐘
+            card.classList.add('border-amber-500', 'bg-amber-950/10', 'animate-shake');
+            overlay.className = "absolute inset-0 pointer-events-none opacity-100 bg-amber-500/10 transition-all duration-200 flex items-center justify-center z-10";
+            icon.textContent = "⏰";
+            icon.className = "text-8xl transform scale-100 transition-all duration-200";
+
+            setTimeout(() => {
+                showExplanation(currentJob, 'timeout');
+            }, 950);
+        }
+
+        // 顯示解析彈窗
+        function showExplanation(job, type) {
+            const modalTitle = document.getElementById('modalTitle');
+            if (type === 'timeout') {
+                modalTitle.textContent = "⏱️ 時間到！";
+                modalTitle.className = "text-3xl font-extrabold text-amber-500";
+            } else {
+                modalTitle.textContent = "❌ 回答錯誤";
+                modalTitle.className = "text-3xl font-extrabold text-rose-500";
+            }
+
+            document.getElementById('expJob').textContent = `${job.emoji} ${job.name}`;
+            document.getElementById('expCorrect').textContent = getCategoryName(job.category);
+            document.getElementById('expText').textContent = job.exp;
+
+            document.getElementById('explanationModal').classList.remove('hidden');
+        }
+
+        // 關閉解析彈窗並切換下一題
+        function closeExplanation() {
+            document.getElementById('explanationModal').classList.add('hidden');
+            nextQuestion();
+        }
+
+        // 切換至下一題或結束遊戲
+        function nextQuestion() {
+            currentIdx++;
+            if (currentIdx < 7) {
+                renderCard();
+            } else {
+                endGame();
+            }
+        }
+
+        function getCategoryName(cat) {
+            if (cat === 1) return "第一產業 🌱";
+            if (cat === 2) return "第二產業 🏭";
+            return "第三產業 🤝";
+        }
+
+        // 結算畫面
+        function endGame() {
+            clearInterval(timerInterval);
+            playSound('finish');
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('resultsScreen').classList.remove('hidden');
+
+            // 計算數據
+            document.getElementById('finalScore').textContent = `${score} / 7`;
+            const accuracy = Math.round((score / 7) * 100);
+            document.getElementById('finalAccuracy').textContent = `${accuracy}%`;
+
+            // 建立錯題本
+            const mistakesBox = document.getElementById('mistakesBox');
+            const mistakesList = document.getElementById('mistakesList');
+            mistakesList.innerHTML = '';
+
+            if (mistakes.length > 0) {
+                mistakesBox.classList.remove('hidden');
+                mistakes.forEach(item => {
+                    const failReason = item.type === 'timeout' 
+                        ? `<span class="text-amber-400">⏱️ 你超時未答</span>` 
+                        : `<span class="text-rose-400">你答：${getCategoryName(item.chosen)}</span>`;
+
+                    mistakesList.innerHTML += `
+                        <div class="bg-slate-950/60 border-l-4 ${item.type === 'timeout' ? 'border-amber-500' : 'border-rose-500'} p-3 rounded-r-xl text-xs space-y-1">
+                            <div class="flex justify-between font-bold">
+                                <span>${item.job.emoji} ${item.job.name}</span>
+                                ${failReason}
+                            </div>
+                            <p class="text-emerald-400 font-medium">正確答案：${getCategoryName(item.job.category)}</p>
+                            <p class="text-slate-400 leading-relaxed">${item.job.exp}</p>
+                        </div>
+                    `;
+                });
+            } else {
+                mistakesBox.classList.add('hidden');
+            }
+        }
+
+        // 返回首頁
+        function returnToMenu() {
+            clearInterval(timerInterval);
+            document.getElementById('resultsScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('menuScreen').classList.remove('hidden');
         }
     </script>
 </body>
