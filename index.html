@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>圖片時間表轉行事曆工具</title>
+  <title>圖片時間表轉行事曆工具 (含即時預覽)</title>
   <style>
     * { box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 15px; background: #f4f4f7; color: #333; }
-    .layout { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 1000px; margin: 0 auto; }
-    @media(min-width: 768px) { .layout { grid-template-columns: 1fr 1fr; } }
-    .card { background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    .layout { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 1200px; margin: 0 auto; }
+    @media(min-width: 900px) { .layout { grid-template-columns: 1fr 1fr; } }
+    .card { background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
     h3 { margin-top: 0; color: #1d1d1f; }
     .img-preview { max-width: 100%; border-radius: 8px; margin-top: 10px; display: none; }
     .form-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 5px; }
@@ -22,27 +22,64 @@
     .btn-add { background: #e5e5ea; color: #007aff; width: 100%; margin-bottom: 10px; }
     .btn-delete { background: #ff3b30; color: white; padding: 4px 8px; font-size: 12px; margin-top: 5px; }
     .btn-export { background: #34c759; color: white; width: 100%; padding: 12px; font-size: 16px; margin-top: 10px; }
+
+    /* 週曆預覽樣式 */
+    .timetable-container { overflow-x: auto; }
+    .timetable { display: grid; grid-template-columns: 45px repeat(7, 1fr); gap: 1px; background: #e5e5ea; border: 1px solid #e5e5ea; border-radius: 8px; min-width: 500px; }
+    .th { background: #f2f2f7; text-align: center; font-size: 12px; font-weight: bold; padding: 6px 0; color: #555; }
+    .day-column { background: #fff; height: 480px; position: relative; }
+    .time-labels { display: flex; flex-direction: column; justify-content: space-between; height: 480px; background: #fafafa; text-align: center; font-size: 10px; color: #888; padding: 2px 0; }
+    .preview-block { position: absolute; left: 2px; right: 2px; border-radius: 4px; padding: 3px 4px; color: white; font-size: 11px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.15); line-height: 1.2; }
+    .preview-block .title { font-weight: bold; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .preview-block .time-info { font-size: 9px; opacity: 0.9; }
   </style>
 </head>
 <body>
 
 <div class="layout">
-  <!-- 左側：圖片預覽區 -->
-  <div class="card">
-    <h3>1. 對照時間表圖片</h3>
-    <input type="file" id="imageInput" accept="image/*">
-    <img id="preview" class="img-preview" alt="時間表預覽">
+  <!-- 左側：圖片對照與即時週曆預覽 -->
+  <div>
+    <div class="card">
+      <h3>1. 對照時間表圖片</h3>
+      <input type="file" id="imageInput" accept="image/*">
+      <img id="preview" class="img-preview" alt="時間表預覽">
+    </div>
+
+    <div class="card">
+      <h3>4. 即時課表預覽 (08:00 - 20:00)</h3>
+      <div class="timetable-container">
+        <div class="timetable">
+          <div class="th">時間</div>
+          <div class="th">一</div>
+          <div class="th">二</div>
+          <div class="th">三</div>
+          <div class="th">四</div>
+          <div class="th">五</div>
+          <div class="th">六</div>
+          <div class="th">日</div>
+
+          <div class="time-labels">
+            <span>08:00</span><span>10:00</span><span>12:00</span><span>14:00</span><span>16:00</span><span>18:00</span><span>20:00</span>
+          </div>
+          <div class="day-column" data-day="1"></div>
+          <div class="day-column" data-day="2"></div>
+          <div class="day-column" data-day="3"></div>
+          <div class="day-column" data-day="4"></div>
+          <div class="day-column" data-day="5"></div>
+          <div class="day-column" data-day="6"></div>
+          <div class="day-column" data-day="0"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- 右側：資料輸入與匯出 -->
+  <!-- 右側：資料輸入區 -->
   <div class="card">
     <h3>2. 設定學期與時間</h3>
-    
     <div class="form-group">
       <label>學期開始星期一日期</label>
       <input type="date" id="startDate" required>
     </div>
-    
     <div class="form-group">
       <label>重複週數（例如 16 週）</label>
       <input type="number" id="weeksCount" value="16" min="1" max="30">
@@ -57,7 +94,9 @@
 </div>
 
 <script>
-  // 圖片預覽 logic
+  const colors = ['#007aff', '#34c759', '#af52de', '#ff9500', '#ff2d55', '#5856d6', '#00c7be'];
+
+  // 圖片載入預覽
   document.getElementById('imageInput').addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (file) {
@@ -71,15 +110,15 @@
     }
   });
 
-  // 動態增加課程
+  // 新增課程列
   function addEventRow() {
     const container = document.getElementById('eventsList');
     const div = document.createElement('div');
     div.className = 'event-card';
     div.innerHTML = `
       <div class="event-grid">
-        <input type="text" placeholder="名稱 (例如：微積分)" class="full-width name" required>
-        <select class="weekday">
+        <input type="text" placeholder="課程名稱 (例：微積分)" class="full-width name" oninput="updatePreview()">
+        <select class="weekday" onchange="updatePreview()">
           <option value="1">星期一</option>
           <option value="2">星期二</option>
           <option value="3">星期三</option>
@@ -88,19 +127,65 @@
           <option value="6">星期六</option>
           <option value="0">星期日</option>
         </select>
-        <input type="text" placeholder="地點 (可不填)" class="location">
-        <input type="time" class="startTime" value="09:00" required>
-        <input type="time" class="endTime" value="10:00" required>
+        <input type="text" placeholder="地點 (例：Rm 101)" class="location" oninput="updatePreview()">
+        <input type="time" class="startTime" value="09:00" onchange="updatePreview()">
+        <input type="time" class="endTime" value="10:00" onchange="updatePreview()">
       </div>
-      <button class="btn-delete" onclick="this.parentElement.remove()">刪除</button>
+      <button class="btn-delete" onclick="this.parentElement.remove(); updatePreview();">刪除</button>
     `;
     container.appendChild(div);
+    updatePreview();
   }
 
-  // 預設新增一行
+  // 時間轉分鐘輔助函式
+  function timeToMin(tStr) {
+    if (!tStr) return 0;
+    const [h, m] = tStr.split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  // 更新課表即時預覽
+  function updatePreview() {
+    // 清空當前預覽
+    document.querySelectorAll('.day-column').forEach(col => col.innerHTML = '');
+
+    const cards = document.querySelectorAll('.event-card');
+    const dayStart = 8 * 60; // 08:00
+    const dayEnd = 20 * 60;  // 20:00
+    const totalMin = dayEnd - dayStart;
+
+    cards.forEach((card, index) => {
+      const name = card.querySelector('.name').value || '未命名課程';
+      const weekday = card.querySelector('.weekday').value;
+      const location = card.querySelector('.location').value;
+      const start = timeToMin(card.querySelector('.startTime').value);
+      const end = timeToMin(card.querySelector('.endTime').value);
+
+      const targetCol = document.querySelector(`.day-column[data-day="${weekday}"]`);
+      if (!targetCol || start >= end) return;
+
+      // 計算在預覽圖中的高度與位置 (%)
+      const topPercent = Math.max(0, ((start - dayStart) / totalMin) * 100);
+      const heightPercent = Math.min(100 - topPercent, ((end - start) / totalMin) * 100);
+
+      const block = document.createElement('div');
+      block.className = 'preview-block';
+      block.style.top = `${topPercent}%`;
+      block.style.height = `${heightPercent}%`;
+      block.style.backgroundColor = colors[index % colors.length];
+
+      block.innerHTML = `
+        <span class="title">${name}</span>
+        <span class="time-info">${location ? location : ''}</span>
+      `;
+      targetCol.appendChild(block);
+    });
+  }
+
+  // 預設建立一列
   addEventRow();
 
-  // 匯出 .ics 檔
+  // 匯出 .ics 行事曆
   function exportICS() {
     const startDateVal = document.getElementById('startDate').value;
     const weeksCount = parseInt(document.getElementById('weeksCount').value, 10);
@@ -132,9 +217,8 @@
       const startTime = card.querySelector('.startTime').value;
       const endTime = card.querySelector('.endTime').value;
 
-      // 計算開學第一週該星期幾的日期
       let eventDate = new Date(baseMonday);
-      let dayOffset = (weekday === 0 ? 7 : weekday) - 1; // 星期一為基底 (0 offset)
+      let dayOffset = (weekday === 0 ? 7 : weekday) - 1;
       eventDate.setDate(baseMonday.getDate() + dayOffset);
 
       const yyyy = eventDate.getFullYear();
@@ -155,7 +239,6 @@
 
     icsContent.push('END:VCALENDAR');
 
-    // 下載檔案
     const blob = new Blob([icsContent.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
     const link = document.createElement('a');
     link.href = window.URL.createObjectURL(blob);
