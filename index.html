@@ -1,588 +1,167 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>產業達人：職業分類十秒限時挑戰</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-        }
-        /* 答錯抖動動畫 */
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-8px); }
-            40%, 80% { transform: translateX(8px); }
-        }
-        .animate-shake {
-            animation: shake 0.4s ease-in-out;
-        }
-
-        /* 答對縮放動畫 */
-        @keyframes pulse-correct {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.03); }
-            100% { transform: scale(1); }
-        }
-        .animate-correct {
-            animation: pulse-correct 0.4s ease-in-out;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>圖片時間表轉行事曆工具</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 15px; background: #f4f4f7; color: #333; }
+    .layout { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 1000px; margin: 0 auto; }
+    @media(min-width: 768px) { .layout { grid-template-columns: 1fr 1fr; } }
+    .card { background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    h3 { margin-top: 0; color: #1d1d1f; }
+    .img-preview { max-width: 100%; border-radius: 8px; margin-top: 10px; display: none; }
+    .form-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 5px; }
+    label { font-size: 13px; font-weight: bold; color: #666; }
+    input, select { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+    .event-card { background: #fafafa; border: 1px solid #e5e5ea; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
+    .event-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .full-width { grid-column: span 2; }
+    button { padding: 8px 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .btn-add { background: #e5e5ea; color: #007aff; width: 100%; margin-bottom: 10px; }
+    .btn-delete { background: #ff3b30; color: white; padding: 4px 8px; font-size: 12px; margin-top: 5px; }
+    .btn-export { background: #34c759; color: white; width: 100%; padding: 12px; font-size: 16px; margin-top: 10px; }
+  </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between select-none">
+<body>
 
-    <!-- 頂部導航欄 (極簡化) -->
-    <header class="w-full border-b border-slate-900 bg-slate-900/40 backdrop-blur-md px-6 py-4">
-        <div class="max-w-4xl mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold tracking-wider bg-gradient-to-r from-emerald-400 via-amber-400 to-indigo-400 bg-clip-text text-transparent flex items-center gap-2">
-                <span>⏱️</span> 產業達人：10秒分類極速應戰
-            </h1>
-            <div class="flex items-center space-x-3">
-                <button id="soundToggleBtn" onclick="toggleSound()" class="p-2 bg-slate-900 hover:bg-slate-800 transition rounded-lg border border-slate-800 text-sm" title="切換音效">
-                    🔊 音效
-                </button>
-            </div>
-        </div>
-    </header>
+<div class="layout">
+  <!-- 左側：圖片預覽區 -->
+  <div class="card">
+    <h3>1. 對照時間表圖片</h3>
+    <input type="file" id="imageInput" accept="image/*">
+    <img id="preview" class="img-preview" alt="時間表預覽">
+  </div>
 
-    <!-- 主遊戲區域 -->
-    <main class="flex-grow flex items-center justify-center p-4">
-        <div class="w-full max-w-2xl">
-
-            <!-- ================= 1. 開始畫面 ================= -->
-            <section id="menuScreen" class="bg-slate-900 border border-slate-800/80 rounded-2xl p-6 md:p-8 text-center space-y-6 shadow-xl">
-                <div class="space-y-3">
-                    <div class="inline-block bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full text-xs font-semibold">
-                        ⚡ 挑戰難度：每題僅限10秒！
-                    </div>
-                    <h2 class="text-2xl md:text-3xl font-bold">手腦並用，極速分類！</h2>
-                    <p class="text-slate-400 text-sm max-w-md mx-auto leading-relaxed">
-                        本遊戲精選 7 種代表性職業。每題你只有 <strong class="text-rose-400">10 秒鐘</strong> 能做出選擇！答錯或超時將立刻顯示解析。
-                    </p>
-                </div>
-
-                <!-- 三大產業簡化說明卡 -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-left">
-                    <div class="p-3 bg-emerald-950/20 border border-emerald-900/30 rounded-xl">
-                        <span class="font-bold text-emerald-400 flex items-center gap-1 mb-1">🌱 第一產業</span>
-                        <p class="text-slate-400">直接獲取大自然資源（農、林、漁、牧、採礦）。</p>
-                    </div>
-                    <div class="p-3 bg-amber-950/20 border border-amber-900/30 rounded-xl">
-                        <span class="font-bold text-amber-400 flex items-center gap-1 mb-1">🏭 第二產業</span>
-                        <p class="text-slate-400">加工原料與營造建築（手工業、製造業、營造業）。</p>
-                    </div>
-                    <div class="p-3 bg-indigo-950/20 border border-indigo-900/30 rounded-xl">
-                        <span class="font-bold text-indigo-400 flex items-center gap-1 mb-1">🤝 第三產業</span>
-                        <p class="text-slate-400">提供商業服務、物流、中介與勞務（服務業）。</p>
-                    </div>
-                </div>
-
-                <button onclick="startGame()" class="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold rounded-xl transition shadow-lg shadow-orange-950/40 text-lg">
-                    進入時空倒數挑戰 🚀
-                </button>
-            </section>
-
-            <!-- ================= 2. 答題畫面 ================= -->
-            <section id="gameScreen" class="hidden space-y-6">
-                <!-- 狀態顯示與 10秒計時條 -->
-                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
-                    <div class="flex justify-between items-center text-sm">
-                        <div class="flex items-center space-x-4">
-                            <div>
-                                <span class="text-xs text-slate-500 block">當前進度</span>
-                                <span class="font-bold"><span id="currentNum" class="text-indigo-400 text-lg">1</span> / 7 題</span>
-                            </div>
-                            <div>
-                                <span class="text-xs text-slate-500 block">答對題數</span>
-                                <span id="scoreVal" class="text-emerald-400 font-bold text-lg">0</span>
-                            </div>
-                        </div>
-                        
-                        <!-- 倒計時秒數 -->
-                        <div class="text-right">
-                            <span class="text-xs text-slate-500 block">剩餘時間</span>
-                            <span id="timerText" class="text-xl font-black text-amber-400">10s</span>
-                        </div>
-                    </div>
-
-                    <!-- 10秒動態減少進度條 -->
-                    <div class="w-full bg-slate-950 h-3 rounded-full overflow-hidden border border-slate-850">
-                        <div id="timerBar" class="bg-amber-400 h-full w-full transition-all duration-100 ease-linear"></div>
-                    </div>
-                </div>
-
-                <!-- 職業主字卡 (帶有特殊反饋圖層) -->
-                <div id="card" class="relative bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 text-center space-y-4 shadow-lg transition-all duration-300 overflow-hidden">
-                    
-                    <!-- 特效遮罩層 (答對/答錯/超時閃爍) -->
-                    <div id="effectOverlay" class="absolute inset-0 pointer-events-none opacity-0 transition-all duration-300 flex items-center justify-center z-10">
-                        <div id="effectIcon" class="text-8xl transform scale-50 transition-all duration-300"></div>
-                    </div>
-
-                    <div id="jobEmoji" class="text-6xl md:text-7xl transition-transform duration-300">💁</div>
-                    <div class="space-y-1">
-                        <h3 id="jobName" class="text-2xl md:text-3xl font-extrabold text-white">職業名稱</h3>
-                        <p id="jobDesc" class="text-slate-400 text-sm max-w-sm mx-auto italic"></p>
-                    </div>
-                    <div class="text-[10px] text-slate-600 hidden md:block">
-                        💡 鍵盤快速鍵：按 <kbd class="px-1 bg-slate-800 rounded text-slate-400">1</kbd>、<kbd class="px-1 bg-slate-800 rounded text-slate-400">2</kbd>、<kbd class="px-1 bg-slate-800 rounded text-slate-400">3</kbd> 即可直接作答
-                    </div>
-                </div>
-
-                <!-- 產業選擇大按鈕 -->
-                <div id="actionButtons" class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <button onclick="submitAnswer(1)" class="group active:scale-95 transition relative bg-slate-900 border border-slate-800 hover:border-emerald-500/70 p-4 rounded-xl text-center space-y-1">
-                        <span class="text-2xl">🌱</span>
-                        <div class="font-bold text-emerald-400">第一產業</div>
-                        <div class="text-[10px] text-slate-500">原料開採與農漁牧</div>
-                    </button>
-                    <button onclick="submitAnswer(2)" class="group active:scale-95 transition relative bg-slate-900 border border-slate-800 hover:border-amber-500/70 p-4 rounded-xl text-center space-y-1">
-                        <span class="text-2xl">🏭</span>
-                        <div class="font-bold text-amber-400">第二產業</div>
-                        <div class="text-[10px] text-slate-500">工業製造與營建</div>
-                    </button>
-                    <button onclick="submitAnswer(3)" class="group active:scale-95 transition relative bg-slate-900 border border-slate-800 hover:border-indigo-500/70 p-4 rounded-xl text-center space-y-1">
-                        <span class="text-2xl">🤝</span>
-                        <div class="font-bold text-indigo-400">第三產業</div>
-                        <div class="text-[10px] text-slate-500">商業貿易與服務</div>
-                    </button>
-                </div>
-            </section>
-
-            <!-- ================= 3. 結果與評估畫面 ================= -->
-            <section id="resultsScreen" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 text-center space-y-6 shadow-xl">
-                <div class="space-y-2">
-                    <div class="text-5xl">🏆</div>
-                    <h2 class="text-2xl font-bold">限時挑戰結束！</h2>
-                    <p class="text-slate-400 text-sm">這是您今日在計時賽中的戰績：</p>
-                </div>
-
-                <!-- 數據面板 -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-slate-950/50 p-4 rounded-xl border border-slate-800">
-                        <span class="text-xs text-slate-500 block">答對率</span>
-                        <span id="finalAccuracy" class="text-2xl font-bold text-emerald-400">0%</span>
-                    </div>
-                    <div class="bg-slate-950/50 p-4 rounded-xl border border-slate-800">
-                        <span class="text-xs text-slate-500 block">答對題數</span>
-                        <span id="finalScore" class="text-2xl font-bold text-amber-400">0 / 7</span>
-                    </div>
-                </div>
-
-                <!-- 糾錯學習本 (如果有答錯/超時) -->
-                <div id="mistakesBox" class="text-left space-y-3">
-                    <h4 class="text-xs font-bold text-rose-400 uppercase tracking-wider">📝 錯題與超時複習筆記：</h4>
-                    <div id="mistakesList" class="space-y-2 max-h-48 overflow-y-auto pr-1">
-                        <!-- 錯題列表 -->
-                    </div>
-                </div>
-
-                <!-- 控制鈕 -->
-                <div class="flex gap-3">
-                    <button onclick="returnToMenu()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-755 rounded-xl transition text-sm">
-                        🏠 返回主選單
-                    </button>
-                    <button onclick="startGame()" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 font-bold rounded-xl transition text-sm">
-                        🔄 再戰一次
-                    </button>
-                </div>
-            </section>
-
-        </div>
-    </main>
-
-    <!-- 答錯/超時即時反饋彈窗 (錯1時顯示答案) -->
-    <div id="explanationModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm hidden">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-5 transform scale-100 transition-all">
-            <div class="text-center space-y-1">
-                <div id="modalTitle" class="text-3xl font-extrabold text-rose-500">❌ 回答錯誤</div>
-                <h3 class="text-sm font-bold text-slate-400">請緊記以下正確產業分類：</h3>
-            </div>
-            
-            <div class="bg-slate-950/50 p-4 rounded-xl border border-slate-800 space-y-2 text-sm">
-                <div class="flex justify-between border-b border-slate-800 pb-1.5 text-xs text-slate-400">
-                    <span>題目職業：</span>
-                    <span id="expJob" class="font-bold text-white">職業</span>
-                </div>
-                <div class="flex justify-between border-b border-slate-800 pb-1.5 text-xs text-slate-400">
-                    <span>正確答案：</span>
-                    <span id="expCorrect" class="font-bold text-emerald-400">第一產業</span>
-                </div>
-                <p id="expText" class="text-xs text-slate-300 leading-relaxed pt-1"></p>
-            </div>
-
-            <button onclick="closeExplanation()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition text-sm">
-                理解了，下一題 👉
-            </button>
-        </div>
+  <!-- 右側：資料輸入與匯出 -->
+  <div class="card">
+    <h3>2. 設定學期與時間</h3>
+    
+    <div class="form-group">
+      <label>學期開始星期一日期</label>
+      <input type="date" id="startDate" required>
+    </div>
+    
+    <div class="form-group">
+      <label>重複週數（例如 16 週）</label>
+      <input type="number" id="weeksCount" value="16" min="1" max="30">
     </div>
 
-    <!-- 頁腳 -->
-    <footer class="w-full text-center py-4 text-[10px] text-slate-700 border-t border-slate-950">
-        <p>© 2026 產業分類挑戰遊戲 - 10秒競速版. 專為高效學習設計.</p>
-    </footer>
+    <h3>3. 輸入課程項目</h3>
+    <div id="eventsList"></div>
+    
+    <button class="btn-add" onclick="addEventRow()">+ 新增行程 / 課程</button>
+    <button class="btn-export" onclick="exportICS()">下載 .ics 檔案匯入手機</button>
+  </div>
+</div>
 
-    <!-- ================= 遊戲核心邏輯 ================= -->
-    <script>
-        // 音效模組
-        let audioCtx = null;
-        let isSoundEnabled = true;
+<script>
+  // 圖片預覽 logic
+  document.getElementById('imageInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const img = document.getElementById('preview');
+        img.src = event.target.result;
+        img.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+  });
 
-        function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-        }
+  // 動態增加課程
+  function addEventRow() {
+    const container = document.getElementById('eventsList');
+    const div = document.createElement('div');
+    div.className = 'event-card';
+    div.innerHTML = `
+      <div class="event-grid">
+        <input type="text" placeholder="名稱 (例如：微積分)" class="full-width name" required>
+        <select class="weekday">
+          <option value="1">星期一</option>
+          <option value="2">星期二</option>
+          <option value="3">星期三</option>
+          <option value="4">星期四</option>
+          <option value="5">星期五</option>
+          <option value="6">星期六</option>
+          <option value="0">星期日</option>
+        </select>
+        <input type="text" placeholder="地點 (可不填)" class="location">
+        <input type="time" class="startTime" value="09:00" required>
+        <input type="time" class="endTime" value="10:00" required>
+      </div>
+      <button class="btn-delete" onclick="this.parentElement.remove()">刪除</button>
+    `;
+    container.appendChild(div);
+  }
 
-        function playSound(type) {
-            if (!isSoundEnabled) return;
-            initAudio();
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+  // 預設新增一行
+  addEventRow();
 
-            try {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                const now = audioCtx.currentTime;
+  // 匯出 .ics 檔
+  function exportICS() {
+    const startDateVal = document.getElementById('startDate').value;
+    const weeksCount = parseInt(document.getElementById('weeksCount').value, 10);
+    
+    if (!startDateVal) {
+      alert('請先選擇學期開始的星期一日期！');
+      return;
+    }
 
-                if (type === 'correct') {
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(523.25, now); // C5
-                    osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
-                    osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
-                    gain.gain.setValueAtTime(0.12, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-                    osc.start(now);
-                    osc.stop(now + 0.35);
-                } else if (type === 'incorrect') {
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(140, now);
-                    osc.frequency.setValueAtTime(110, now + 0.12);
-                    gain.gain.setValueAtTime(0.18, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-                    osc.start(now);
-                    osc.stop(now + 0.4);
-                } else if (type === 'tick') {
-                    // 每秒急促的心跳聲
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(800, now);
-                    gain.gain.setValueAtTime(0.05, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-                    osc.start(now);
-                    osc.stop(now + 0.06);
-                } else if (type === 'finish') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(523.25, now);
-                    osc.frequency.setValueAtTime(783.99, now + 0.15);
-                    gain.gain.setValueAtTime(0.12, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-                    osc.start(now);
-                    osc.stop(now + 0.5);
-                }
-            } catch (e) {
-                console.warn("無法啟動音效: ", e);
-            }
-        }
+    const cards = document.querySelectorAll('.event-card');
+    if (cards.length === 0) {
+      alert('請至少建立一個行程！');
+      return;
+    }
 
-        function toggleSound() {
-            isSoundEnabled = !isSoundEnabled;
-            const btn = document.getElementById('soundToggleBtn');
-            btn.innerHTML = isSoundEnabled ? '🔊 音效' : '🔇 靜音';
-            btn.classList.toggle('bg-red-950/30', !isSoundEnabled);
-            btn.classList.toggle('border-red-900/30', !isSoundEnabled);
-        }
+    let icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//My Timetable App//TW',
+      'CALSCALE:GREGORIAN'
+    ];
 
-        // 指定的 7 個職業數據
-        const professions = [
-            { id: 'a', name: "侍應", category: 3, emoji: "💁", desc: "在餐廳內接待客人、點餐、端送盤碟並提供貼心服務。", exp: "「侍應」主要職責是提供飲食服務與人際溝通，不直接生產實體商品，因此歸類於【第三產業】（服務業）。" },
-            { id: 'b', name: "農夫", category: 1, emoji: "🧑‍🌾", desc: "在田野間犁地、播種、灌溉，細心培育大自然的農產品。", exp: "「農夫」直接從土地中獲取小麥、稻米等大自然天然資源，因此歸類於【第一產業】（農業）。" },
-            { id: 'c', name: "製衣工人", category: 2, emoji: "🧵", desc: "在服裝加工廠操作裁縫與縫紉機器，將布料拼裝成衣服。", exp: "「製衣工人」將棉花、布料等原材料加工製造成實體衣物商品，因此歸類於【第二產業】（工業與製造業）。" },
-            { id: 'd', name: "保險經紀", category: 3, emoji: "💼", desc: "為客戶規劃保險、評估風險、提供合適的財務保障規劃服務。", exp: "「保險經紀」提供非物質性的金融保險服務、風險諮詢，因此歸類於【第三產業】（金融服務與中介業）。" },
-            { id: 'e', name: "建築工人", category: 2, emoji: "👷", desc: "在建築工地砌磚、灌漿、焊接，合力建造高大建築物。", exp: "「建築工人」負責將水泥、鋼筋加工組裝成房屋、橋樑等有形設施，因此歸類於【第二產業】（營造與建築業）。" },
-            { id: 'f', name: "漁夫", category: 1, emoji: "🎣", desc: "在大海中捕撈野生的魚、蝦與貝類，收穫豐富的海鮮資源。", exp: "「漁夫」直接捕獲並利用天然的海洋野生生物資源，因此歸類於【第一產業】（漁業）。" },
-            { id: 'g', name: "速遞員", category: 3, emoji: "🛵", desc: "騎著機車在大街小巷穿梭，迅速安全地遞送客戶的包裹。", exp: "「速遞員」提供物流運輸和商品流通的代勞服務，不製造產品，因此歸類於【第三產業】（交通運輸與物流業）。" }
-        ];
+    const baseMonday = new Date(startDateVal);
 
-        // 遊戲狀態與計時器變數
-        let currentIdx = 0;
-        let score = 0;
-        let sortedQueue = [];
-        let mistakes = [];
-        
-        let timeLeft = 10; // 每題 10 秒
-        let timerInterval = null;
-        let isWaitingForNext = false; // 是否正在展示答題反饋或彈窗
+    cards.forEach(card => {
+      const name = card.querySelector('.name').value || '未命名行程';
+      const weekday = parseInt(card.querySelector('.weekday').value, 10);
+      const location = card.querySelector('.location').value || '';
+      const startTime = card.querySelector('.startTime').value;
+      const endTime = card.querySelector('.endTime').value;
 
-        // 鍵盤快捷鍵作答
-        window.addEventListener('keydown', (e) => {
-            if (document.getElementById('gameScreen').classList.contains('hidden')) return;
-            if (!document.getElementById('explanationModal').classList.contains('hidden')) return;
-            if (isWaitingForNext) return;
+      // 計算開學第一週該星期幾的日期
+      let eventDate = new Date(baseMonday);
+      let dayOffset = (weekday === 0 ? 7 : weekday) - 1; // 星期一為基底 (0 offset)
+      eventDate.setDate(baseMonday.getDate() + dayOffset);
 
-            if (e.key === '1') submitAnswer(1);
-            if (e.key === '2') submitAnswer(2);
-            if (e.key === '3') submitAnswer(3);
-        });
+      const yyyy = eventDate.getFullYear();
+      const mm = String(eventDate.getMonth() + 1).padStart(2, '0');
+      const dd = String(eventDate.getDate()).padStart(2, '0');
 
-        // 開始挑戰
-        function startGame() {
-            currentIdx = 0;
-            score = 0;
-            mistakes = [];
-            isWaitingForNext = false;
-            
-            // 隨機打亂這 7 道題目
-            sortedQueue = [...professions].sort(() => Math.random() - 0.5);
+      const dtStart = `${yyyy}${mm}${dd}T${startTime.replace(':', '')}00`;
+      const dtEnd = `${yyyy}${mm}${dd}T${endTime.replace(':', '')}00`;
 
-            document.getElementById('menuScreen').classList.add('hidden');
-            document.getElementById('resultsScreen').classList.add('hidden');
-            document.getElementById('gameScreen').classList.remove('hidden');
+      icsContent.push('BEGIN:VEVENT');
+      icsContent.push(`SUMMARY:${name}`);
+      if (location) icsContent.push(`LOCATION:${location}`);
+      icsContent.push(`DTSTART:${dtStart}`);
+      icsContent.push(`DTEND:${dtEnd}`);
+      icsContent.push(`RRULE:FREQ=WEEKLY;COUNT=${weeksCount}`);
+      icsContent.push('END:VEVENT');
+    });
 
-            renderCard();
-        }
+    icsContent.push('END:VCALENDAR');
 
-        // 開始每題 10 秒計時器
-        function resetAndStartTimer() {
-            clearInterval(timerInterval);
-            timeLeft = 10;
-            updateTimerUI();
-
-            timerInterval = setInterval(() => {
-                if (isWaitingForNext) return;
-
-                timeLeft -= 0.1;
-                
-                // 每整秒響起警示音 (當時間少於3秒)
-                if (timeLeft > 0 && Math.abs((timeLeft % 1) - 0.9) < 0.05 && timeLeft <= 3.2) {
-                    playSound('tick');
-                }
-
-                if (timeLeft <= 0) {
-                    timeLeft = 0;
-                    clearInterval(timerInterval);
-                    handleTimeOut(); // 超時處理
-                }
-                updateTimerUI();
-            }, 100);
-        }
-
-        // 更新計時器的視覺效果
-        function updateTimerUI() {
-            const timerBar = document.getElementById('timerBar');
-            const timerText = document.getElementById('timerText');
-            const percentage = (timeLeft / 10) * 100;
-            
-            timerBar.style.width = `${percentage}%`;
-            timerText.textContent = `${Math.ceil(timeLeft)}s`;
-
-            if (timeLeft <= 3) {
-                // 緊迫警告：變為紅色並震盪
-                timerBar.className = "bg-rose-500 h-full transition-all duration-100 ease-linear";
-                timerText.className = "text-xl font-black text-rose-500 animate-pulse";
-            } else {
-                timerBar.className = "bg-amber-400 h-full transition-all duration-100 ease-linear";
-                timerText.className = "text-xl font-black text-amber-400";
-            }
-        }
-
-        // 渲染題目卡
-        function renderCard() {
-            isWaitingForNext = false;
-            const currentJob = sortedQueue[currentIdx];
-            
-            // 進度與得分
-            document.getElementById('currentNum').textContent = currentIdx + 1;
-            document.getElementById('scoreVal').textContent = score;
-
-            // 卡片文字
-            document.getElementById('jobEmoji').textContent = currentJob.emoji;
-            document.getElementById('jobName').textContent = currentJob.name;
-            document.getElementById('jobDesc').textContent = `「${currentJob.desc}」`;
-
-            // 清理所有特效
-            const card = document.getElementById('card');
-            card.className = "relative bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 text-center space-y-4 shadow-lg transition-all duration-300 overflow-hidden";
-            
-            const overlay = document.getElementById('effectOverlay');
-            overlay.className = "absolute inset-0 pointer-events-none opacity-0 transition-all duration-300 flex items-center justify-center z-10";
-            
-            // 重新啟動 10 秒計時
-            resetAndStartTimer();
-        }
-
-        // 送出答案
-        function submitAnswer(chosen) {
-            if (isWaitingForNext) return;
-            isWaitingForNext = true;
-            clearInterval(timerInterval); // 停止計時
-
-            const currentJob = sortedQueue[currentIdx];
-            const isCorrect = (currentJob.category === chosen);
-
-            const card = document.getElementById('card');
-            const overlay = document.getElementById('effectOverlay');
-            const icon = document.getElementById('effectIcon');
-
-            if (isCorrect) {
-                score++;
-                playSound('correct');
-
-                // 答對動態特效：綠色外框發光、浮現勾勾
-                card.classList.add('border-emerald-500', 'bg-emerald-950/20', 'animate-correct');
-                overlay.className = "absolute inset-0 pointer-events-none opacity-100 bg-emerald-500/10 transition-all duration-200 flex items-center justify-center z-10";
-                icon.textContent = "✓";
-                icon.className = "text-8xl text-emerald-400 transform scale-100 transition-all duration-200 font-bold";
-
-                // 短暫延遲後前往下一題
-                setTimeout(() => {
-                    nextQuestion();
-                }, 850);
-
-            } else {
-                // 答錯立即記錄
-                mistakes.push({
-                    job: currentJob,
-                    chosen: chosen,
-                    type: 'wrong'
-                });
-                playSound('incorrect');
-
-                // 答錯動態特效：紅色外框發光、卡片劇烈震動、浮現叉叉
-                card.classList.add('border-rose-500', 'bg-rose-950/20', 'animate-shake');
-                overlay.className = "absolute inset-0 pointer-events-none opacity-100 bg-rose-500/10 transition-all duration-200 flex items-center justify-center z-10";
-                icon.textContent = "✗";
-                icon.className = "text-8xl text-rose-500 transform scale-100 transition-all duration-200 font-bold";
-
-                // 特效展示後，錯1題立即顯示觀念解析
-                setTimeout(() => {
-                    showExplanation(currentJob, 'wrong');
-                }, 850);
-            }
-        }
-
-        // 超時處理
-        function handleTimeOut() {
-            if (isWaitingForNext) return;
-            isWaitingForNext = true;
-            
-            const currentJob = sortedQueue[currentIdx];
-            mistakes.push({
-                job: currentJob,
-                chosen: null,
-                type: 'timeout'
-            });
-
-            playSound('incorrect');
-
-            const card = document.getElementById('card');
-            const overlay = document.getElementById('effectOverlay');
-            const icon = document.getElementById('effectIcon');
-
-            // 超時特效：黃色警示、卡片微抖、顯示時鐘
-            card.classList.add('border-amber-500', 'bg-amber-950/10', 'animate-shake');
-            overlay.className = "absolute inset-0 pointer-events-none opacity-100 bg-amber-500/10 transition-all duration-200 flex items-center justify-center z-10";
-            icon.textContent = "⏰";
-            icon.className = "text-8xl transform scale-100 transition-all duration-200";
-
-            setTimeout(() => {
-                showExplanation(currentJob, 'timeout');
-            }, 950);
-        }
-
-        // 顯示解析彈窗
-        function showExplanation(job, type) {
-            const modalTitle = document.getElementById('modalTitle');
-            if (type === 'timeout') {
-                modalTitle.textContent = "⏱️ 時間到！";
-                modalTitle.className = "text-3xl font-extrabold text-amber-500";
-            } else {
-                modalTitle.textContent = "❌ 回答錯誤";
-                modalTitle.className = "text-3xl font-extrabold text-rose-500";
-            }
-
-            document.getElementById('expJob').textContent = `${job.emoji} ${job.name}`;
-            document.getElementById('expCorrect').textContent = getCategoryName(job.category);
-            document.getElementById('expText').textContent = job.exp;
-
-            document.getElementById('explanationModal').classList.remove('hidden');
-        }
-
-        // 關閉解析彈窗並切換下一題
-        function closeExplanation() {
-            document.getElementById('explanationModal').classList.add('hidden');
-            nextQuestion();
-        }
-
-        // 切換至下一題或結束遊戲
-        function nextQuestion() {
-            currentIdx++;
-            if (currentIdx < 7) {
-                renderCard();
-            } else {
-                endGame();
-            }
-        }
-
-        function getCategoryName(cat) {
-            if (cat === 1) return "第一產業 🌱";
-            if (cat === 2) return "第二產業 🏭";
-            return "第三產業 🤝";
-        }
-
-        // 結算畫面
-        function endGame() {
-            clearInterval(timerInterval);
-            playSound('finish');
-            document.getElementById('gameScreen').classList.add('hidden');
-            document.getElementById('resultsScreen').classList.remove('hidden');
-
-            // 計算數據
-            document.getElementById('finalScore').textContent = `${score} / 7`;
-            const accuracy = Math.round((score / 7) * 100);
-            document.getElementById('finalAccuracy').textContent = `${accuracy}%`;
-
-            // 建立錯題本
-            const mistakesBox = document.getElementById('mistakesBox');
-            const mistakesList = document.getElementById('mistakesList');
-            mistakesList.innerHTML = '';
-
-            if (mistakes.length > 0) {
-                mistakesBox.classList.remove('hidden');
-                mistakes.forEach(item => {
-                    const failReason = item.type === 'timeout' 
-                        ? `<span class="text-amber-400">⏱️ 你超時未答</span>` 
-                        : `<span class="text-rose-400">你答：${getCategoryName(item.chosen)}</span>`;
-
-                    mistakesList.innerHTML += `
-                        <div class="bg-slate-950/60 border-l-4 ${item.type === 'timeout' ? 'border-amber-500' : 'border-rose-500'} p-3 rounded-r-xl text-xs space-y-1">
-                            <div class="flex justify-between font-bold">
-                                <span>${item.job.emoji} ${item.job.name}</span>
-                                ${failReason}
-                            </div>
-                            <p class="text-emerald-400 font-medium">正確答案：${getCategoryName(item.job.category)}</p>
-                            <p class="text-slate-400 leading-relaxed">${item.job.exp}</p>
-                        </div>
-                    `;
-                });
-            } else {
-                mistakesBox.classList.add('hidden');
-            }
-        }
-
-        // 返回首頁
-        function returnToMenu() {
-            clearInterval(timerInterval);
-            document.getElementById('resultsScreen').classList.add('hidden');
-            document.getElementById('gameScreen').classList.add('hidden');
-            document.getElementById('menuScreen').classList.remove('hidden');
-        }
-    </script>
+    // 下載檔案
+    const blob = new Blob([icsContent.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.download = 'timetable.ics';
+    link.click();
+  }
+</script>
 </body>
 </html>
