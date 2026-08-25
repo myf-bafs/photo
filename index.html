@@ -3,247 +3,55 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>圖片時間表轉行事曆工具 (含即時預覽)</title>
+  <title>自動辨識課表工具</title>
+  <!-- 引入 Tesseract.js 進行免費 OCR 文字辨識 -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
-    * { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 15px; background: #f4f4f7; color: #333; }
-    .layout { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 1200px; margin: 0 auto; }
-    @media(min-width: 900px) { .layout { grid-template-columns: 1fr 1fr; } }
-    .card { background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-    h3 { margin-top: 0; color: #1d1d1f; }
-    .img-preview { max-width: 100%; border-radius: 8px; margin-top: 10px; display: none; }
-    .form-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 5px; }
-    label { font-size: 13px; font-weight: bold; color: #666; }
-    input, select { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
-    .event-card { background: #fafafa; border: 1px solid #e5e5ea; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
-    .event-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .full-width { grid-column: span 2; }
-    button { padding: 8px 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
-    .btn-add { background: #e5e5ea; color: #007aff; width: 100%; margin-bottom: 10px; }
-    .btn-delete { background: #ff3b30; color: white; padding: 4px 8px; font-size: 12px; margin-top: 5px; }
-    .btn-export { background: #34c759; color: white; width: 100%; padding: 12px; font-size: 16px; margin-top: 10px; }
-
-    /* 週曆預覽樣式 */
-    .timetable-container { overflow-x: auto; }
-    .timetable { display: grid; grid-template-columns: 45px repeat(7, 1fr); gap: 1px; background: #e5e5ea; border: 1px solid #e5e5ea; border-radius: 8px; min-width: 500px; }
-    .th { background: #f2f2f7; text-align: center; font-size: 12px; font-weight: bold; padding: 6px 0; color: #555; }
-    .day-column { background: #fff; height: 480px; position: relative; }
-    .time-labels { display: flex; flex-direction: column; justify-content: space-between; height: 480px; background: #fafafa; text-align: center; font-size: 10px; color: #888; padding: 2px 0; }
-    .preview-block { position: absolute; left: 2px; right: 2px; border-radius: 4px; padding: 3px 4px; color: white; font-size: 11px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.15); line-height: 1.2; }
-    .preview-block .title { font-weight: bold; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .preview-block .time-info { font-size: 9px; opacity: 0.9; }
+    body { font-family: -apple-system, sans-serif; padding: 20px; background: #f4f4f7; max-width: 800px; margin: 0 auto; }
+    .card { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    button { padding: 10px 15px; background: #007aff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    #status { margin-top: 10px; color: #666; font-size: 14px; }
+    textarea { width: 100%; height: 150px; margin-top: 10px; }
   </style>
 </head>
 <body>
 
-<div class="layout">
-  <!-- 左側：圖片對照與即時週曆預覽 -->
-  <div>
-    <div class="card">
-      <h3>1. 對照時間表圖片</h3>
-      <input type="file" id="imageInput" accept="image/*">
-      <img id="preview" class="img-preview" alt="時間表預覽">
-    </div>
+<div class="card">
+  <h3>1. 上傳課表圖片自動辨識</h3>
+  <input type="file" id="imgInput" accept="image/*">
+  <br><br>
+  <button onclick="scanImage()">自動掃描圖片文字</button>
+  <div id="status"></div>
+</div>
 
-    <div class="card">
-      <h3>4. 即時課表預覽 (08:00 - 20:00)</h3>
-      <div class="timetable-container">
-        <div class="timetable">
-          <div class="th">時間</div>
-          <div class="th">一</div>
-          <div class="th">二</div>
-          <div class="th">三</div>
-          <div class="th">四</div>
-          <div class="th">五</div>
-          <div class="th">六</div>
-          <div class="th">日</div>
-
-          <div class="time-labels">
-            <span>08:00</span><span>10:00</span><span>12:00</span><span>14:00</span><span>16:00</span><span>18:00</span><span>20:00</span>
-          </div>
-          <div class="day-column" data-day="1"></div>
-          <div class="day-column" data-day="2"></div>
-          <div class="day-column" data-day="3"></div>
-          <div class="day-column" data-day="4"></div>
-          <div class="day-column" data-day="5"></div>
-          <div class="day-column" data-day="6"></div>
-          <div class="day-column" data-day="0"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 右側：資料輸入區 -->
-  <div class="card">
-    <h3>2. 設定學期與時間</h3>
-    <div class="form-group">
-      <label>學期開始星期一日期</label>
-      <input type="date" id="startDate" required>
-    </div>
-    <div class="form-group">
-      <label>重複週數（例如 16 週）</label>
-      <input type="number" id="weeksCount" value="16" min="1" max="30">
-    </div>
-
-    <h3>3. 輸入課程項目</h3>
-    <div id="eventsList"></div>
-    
-    <button class="btn-add" onclick="addEventRow()">+ 新增行程 / 課程</button>
-    <button class="btn-export" onclick="exportICS()">下載 .ics 檔案匯入手機</button>
-  </div>
+<div class="card">
+  <h3>2. 掃描結果 (文字擷取)</h3>
+  <textarea id="ocrResult" placeholder="辨識後的文字會顯示在這裡..."></textarea>
 </div>
 
 <script>
-  const colors = ['#007aff', '#34c759', '#af52de', '#ff9500', '#ff2d55', '#5856d6', '#00c7be'];
+  async function scanImage() {
+    const fileInput = document.getElementById('imgInput');
+    const status = document.getElementById('status');
+    const resultBox = document.getElementById('ocrResult');
 
-  // 圖片載入預覽
-  document.getElementById('imageInput').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        const img = document.getElementById('preview');
-        img.src = event.target.result;
-        img.style.display = 'block';
-      };
-      reader.readAsDataURL(file);
-    }
-  });
-
-  // 新增課程列
-  function addEventRow() {
-    const container = document.getElementById('eventsList');
-    const div = document.createElement('div');
-    div.className = 'event-card';
-    div.innerHTML = `
-      <div class="event-grid">
-        <input type="text" placeholder="課程名稱 (例：微積分)" class="full-width name" oninput="updatePreview()">
-        <select class="weekday" onchange="updatePreview()">
-          <option value="1">星期一</option>
-          <option value="2">星期二</option>
-          <option value="3">星期三</option>
-          <option value="4">星期四</option>
-          <option value="5">星期五</option>
-          <option value="6">星期六</option>
-          <option value="0">星期日</option>
-        </select>
-        <input type="text" placeholder="地點 (例：Rm 101)" class="location" oninput="updatePreview()">
-        <input type="time" class="startTime" value="09:00" onchange="updatePreview()">
-        <input type="time" class="endTime" value="10:00" onchange="updatePreview()">
-      </div>
-      <button class="btn-delete" onclick="this.parentElement.remove(); updatePreview();">刪除</button>
-    `;
-    container.appendChild(div);
-    updatePreview();
-  }
-
-  // 時間轉分鐘輔助函式
-  function timeToMin(tStr) {
-    if (!tStr) return 0;
-    const [h, m] = tStr.split(':').map(Number);
-    return h * 60 + m;
-  }
-
-  // 更新課表即時預覽
-  function updatePreview() {
-    // 清空當前預覽
-    document.querySelectorAll('.day-column').forEach(col => col.innerHTML = '');
-
-    const cards = document.querySelectorAll('.event-card');
-    const dayStart = 8 * 60; // 08:00
-    const dayEnd = 20 * 60;  // 20:00
-    const totalMin = dayEnd - dayStart;
-
-    cards.forEach((card, index) => {
-      const name = card.querySelector('.name').value || '未命名課程';
-      const weekday = card.querySelector('.weekday').value;
-      const location = card.querySelector('.location').value;
-      const start = timeToMin(card.querySelector('.startTime').value);
-      const end = timeToMin(card.querySelector('.endTime').value);
-
-      const targetCol = document.querySelector(`.day-column[data-day="${weekday}"]`);
-      if (!targetCol || start >= end) return;
-
-      // 計算在預覽圖中的高度與位置 (%)
-      const topPercent = Math.max(0, ((start - dayStart) / totalMin) * 100);
-      const heightPercent = Math.min(100 - topPercent, ((end - start) / totalMin) * 100);
-
-      const block = document.createElement('div');
-      block.className = 'preview-block';
-      block.style.top = `${topPercent}%`;
-      block.style.height = `${heightPercent}%`;
-      block.style.backgroundColor = colors[index % colors.length];
-
-      block.innerHTML = `
-        <span class="title">${name}</span>
-        <span class="time-info">${location ? location : ''}</span>
-      `;
-      targetCol.appendChild(block);
-    });
-  }
-
-  // 預設建立一列
-  addEventRow();
-
-  // 匯出 .ics 行事曆
-  function exportICS() {
-    const startDateVal = document.getElementById('startDate').value;
-    const weeksCount = parseInt(document.getElementById('weeksCount').value, 10);
-    
-    if (!startDateVal) {
-      alert('請先選擇學期開始的星期一日期！');
+    if (!fileInput.files[0]) {
+      alert('請先選擇圖片！');
       return;
     }
 
-    const cards = document.querySelectorAll('.event-card');
-    if (cards.length === 0) {
-      alert('請至少建立一個行程！');
-      return;
+    status.innerText = '正在掃描圖片中，請稍候...';
+    resultBox.value = '';
+
+    try {
+      const worker = await Tesseract.createWorker('chi_tra+eng'); // 支援繁體中文與英文
+      const ret = await worker.recognize(fileInput.files[0]);
+      resultBox.value = ret.data.text;
+      status.innerText = '掃描完成！';
+      await worker.terminate();
+    } catch (err) {
+      status.innerText = '辨識失敗：' + err.message;
     }
-
-    let icsContent = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'PRODID:-//My Timetable App//TW',
-      'CALSCALE:GREGORIAN'
-    ];
-
-    const baseMonday = new Date(startDateVal);
-
-    cards.forEach(card => {
-      const name = card.querySelector('.name').value || '未命名行程';
-      const weekday = parseInt(card.querySelector('.weekday').value, 10);
-      const location = card.querySelector('.location').value || '';
-      const startTime = card.querySelector('.startTime').value;
-      const endTime = card.querySelector('.endTime').value;
-
-      let eventDate = new Date(baseMonday);
-      let dayOffset = (weekday === 0 ? 7 : weekday) - 1;
-      eventDate.setDate(baseMonday.getDate() + dayOffset);
-
-      const yyyy = eventDate.getFullYear();
-      const mm = String(eventDate.getMonth() + 1).padStart(2, '0');
-      const dd = String(eventDate.getDate()).padStart(2, '0');
-
-      const dtStart = `${yyyy}${mm}${dd}T${startTime.replace(':', '')}00`;
-      const dtEnd = `${yyyy}${mm}${dd}T${endTime.replace(':', '')}00`;
-
-      icsContent.push('BEGIN:VEVENT');
-      icsContent.push(`SUMMARY:${name}`);
-      if (location) icsContent.push(`LOCATION:${location}`);
-      icsContent.push(`DTSTART:${dtStart}`);
-      icsContent.push(`DTEND:${dtEnd}`);
-      icsContent.push(`RRULE:FREQ=WEEKLY;COUNT=${weeksCount}`);
-      icsContent.push('END:VEVENT');
-    });
-
-    icsContent.push('END:VCALENDAR');
-
-    const blob = new Blob([icsContent.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
-    const link = document.createElement('a');
-    link.href = window.URL.createObjectURL(blob);
-    link.download = 'timetable.ics';
-    link.click();
   }
 </script>
 </body>
